@@ -1,8 +1,13 @@
+"""
+Estimation and testing of cointegrated time series
+"""
+from __future__ import division
 
+import numpy as np
 
-
-
-
+from statsmodels.regression.linear_model import OLS
+from statsmodels.tools.tools import add_constant
+from statsmodels.tsa.unitroot import mackinnonp, mackinnoncrit
 
 
 def coint(y1, y2, regression="c"):
@@ -60,6 +65,6 @@ def coint(y1, y2, regression="c"):
     lgresid_cons = add_constant(st1_resid[0:-1], prepend=False)
     uroot_reg = OLS(st1_resid[1:], lgresid_cons).fit()
     coint_t = (uroot_reg.params[0] - 1) / uroot_reg.bse[0]
-    pvalue = mackinnonp(coint_t, regression="c", N=2, lags=None)
-    crit_value = mackinnoncrit(N=1, regression="c", nobs=len(y1))
+    pvalue = mackinnonp(coint_t, regression="c", num_unit_roots=2)
+    crit_value = mackinnoncrit(num_unit_roots=1, regression="c", nobs=len(y1))
     return coint_t, pvalue, crit_value
