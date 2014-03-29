@@ -169,13 +169,26 @@ class UnitRootTest(object):
         self._critical_values = None
         self._pvalue = None
         self.trend = trend
-        self._h0 = 'The process contains a unit root.'
-        self._h1 = 'The process is weakly stationary.'
+        self._null_hypothesis = 'The process contains a unit root.'
+        self._alternative_hypothesis = 'The process is weakly stationary.'
         self._test_name = None
         self._title = None
         self._summary_text = None
 
+
+    def __str__(self):
+        return self.summary().__str__()
+
+    def __repr__(self):
+        return str(type(self)) + '\n"""\n' + self.__str__() + '\n"""'
+
+    def _repr_html_(self):
+        """Display as HTML for IPython notebook."""
+        return self.summary().as_html()
+
     def _compute_statistic(self):
+        """This is the core routine that computes the test statistic, computes
+        the p-value and constructs the critical values."""
         raise NotImplementedError("Subclass must implement")
 
     def _reset(self):
@@ -188,25 +201,25 @@ class UnitRootTest(object):
             self._compute_statistic()
 
     @property
-    def h0(self):
+    def null_hypothesis(self):
         """The null hypothesis"""
-        return self._h0
+        return self._null_hypothesis
 
     @property
-    def hA(self):
+    def alternative_hypothesis(self):
         """The alternative hypothesis"""
-        return self._h1
+        return self._alternative_hypothesis
 
     @property
     def nobs(self):
-        """The number of observations used in the test statistic.
-        Account for loss of data due to lags."""
+        """The number of observations used when computing the test statistic.
+        Accounts for loss of data due to lags for regression-based tests."""
         return self._nobs
 
     @property
     def valid_trends(self):
-        """List of valid trend terms. Must be overridden"""
-        raise NotImplementedError("Subclass must implement")
+        """List of valid trend terms."""
+        return self._valid_trends
 
     @property
     def pvalue(self):
@@ -259,8 +272,8 @@ class UnitRootTest(object):
 
         extra_text = ['Trend: ' + TREND_DESCRIPTION[self._trend],
                       cv_string,
-                      'Null Hypothesis: ' + self.h0,
-                      'Alternative Hypothesis: ' + self.hA]
+                      'Null Hypothesis: ' + self.null_hypothesis,
+                      'Alternative Hypothesis: ' + self.alternative_hypothesis]
 
         smry.add_extra_txt(extra_text)
         if self._summary_text:
@@ -335,7 +348,7 @@ class ADF(UnitRootTest):
     stat
     pvalues
     critical_values
-    h0
+    null_hypothesis
     hA
     summary
     regression
@@ -382,6 +395,7 @@ class ADF(UnitRootTest):
 
     def __init__(self, y, lags=None, trend='c',
                  max_lags=None, method='AIC'):
+        self._valid_trends = ('nc', 'c', 'ct', 'ctt')
         super(ADF, self).__init__(y, lags, trend)
         self._max_lags = max_lags
         self._method = method
@@ -390,6 +404,7 @@ class ADF(UnitRootTest):
         # TODO: Remove when adfuller is depricated
         self._ic_best = None  # For compat with adfuller
         self._autolag_results = None  # For compat with adfuller
+
 
     def _select_lag(self):
         ic_best, best_lag, all_res = _df_select_lags(self._y,
@@ -417,11 +432,6 @@ class ADF(UnitRootTest):
         self._critical_values = {"1%": critical_values[0],
                                  "5%": critical_values[1],
                                  "10%": critical_values[2]}
-
-    @property
-    def valid_trends(self):
-        """Returns the list of value trend terms"""
-        return 'nc', 'c', 'ct', 'ctt'
 
     @property
     def regression(self):
@@ -460,7 +470,7 @@ class DFGLS(UnitRootTest):
     stat
     pvalues
     critical_values
-    h0
+    null_hypothesis
     hA
     summary
     regression
@@ -494,6 +504,7 @@ class DFGLS(UnitRootTest):
 
     def __init__(self, y, lags=None, trend='c',
                  max_lags=None, method='AIC'):
+        self._valid_trends = ('c', 'ct')
         super(DFGLS, self).__init__(y, lags, trend)
         self._max_lags = max_lags
         self._method = method
@@ -503,6 +514,7 @@ class DFGLS(UnitRootTest):
             self._c = -7.0
         else:
             self._c = -13.5
+
 
     def _compute_statistic(self):
         """Core routine to estimate DF-GLS test statistic"""
@@ -546,11 +558,6 @@ class DFGLS(UnitRootTest):
         self._critical_values = {"1%": critical_values[0],
                                  "5%": critical_values[1],
                                  "10%": critical_values[2]}
-
-    @property
-    def valid_trends(self):
-        """Returns the list of value trend terms"""
-        return 'c', 'ct'
 
     @UnitRootTest.trend.setter
     def trend(self, value):
@@ -598,7 +605,7 @@ class PhillipsPerron(UnitRootTest):
     pvalues
     critical_values
     test_type
-    h0
+    null_hypothesis
     hA
     summary
     valid_trends
@@ -651,12 +658,14 @@ class PhillipsPerron(UnitRootTest):
     """
 
     def __init__(self, y, lags=None, trend='c', test_type='tau'):
+        self._valid_trends = ('nc', 'c', 'ct')
         super(PhillipsPerron, self).__init__(y, lags, trend)
         self._test_type = test_type
         self._stat_rho = None
         self._stat_tau = None
         self._test_name = 'Phillips-Perron'
         self._lags = lags
+
 
     def _compute_statistic(self):
         """Core routine to estimate PP test statistics"""
@@ -724,11 +733,6 @@ class PhillipsPerron(UnitRootTest):
         self._reset()
         self._test_type = value
 
-    @property
-    def valid_trends(self):
-        """Returns the list of value trend terms"""
-        return 'nc', 'c', 'ct'
-
 
 class KPSS(UnitRootTest):
     """Kwiatkowski, Phillips, Schmidt and Shin (1992, KPSS) stationarity test
@@ -752,7 +756,7 @@ class KPSS(UnitRootTest):
     pvalues
     critical_values
     test_type
-    h0
+    null_hypothesis
     hA
     summary
     valid_trends
@@ -782,10 +786,12 @@ class KPSS(UnitRootTest):
     """
 
     def __init__(self, y, lags=None, trend='c'):
+        self._valid_trends = ('c', 'ct')
         super(KPSS, self).__init__(y, lags, trend)
         self._test_name = 'KPSS Stationarity Test'
-        self._h0 = 'The process is weakly stationary.'
-        self._h1 = 'The process contains a unit root.'
+        self._null_hypothesis = 'The process is weakly stationary.'
+        self._alternative_hypothesis = 'The process contains a unit root.'
+
 
     def _compute_statistic(self):
         # 1. Estimate model with trend
@@ -804,11 +810,6 @@ class KPSS(UnitRootTest):
         self._critical_values = {"1%": critical_values[0],
                                  "5%": critical_values[1],
                                  "10%": critical_values[2]}
-
-    @property
-    def valid_trends(self):
-        """Returns the list of value trend terms"""
-        return 'c', 'ct'
 
 
 class VarianceRatio(UnitRootTest):
@@ -843,7 +844,7 @@ class VarianceRatio(UnitRootTest):
     pvalues
     critical_values
     test_type
-    h0
+    null_hypothesis
     hA
     summary
     valid_trends
@@ -876,15 +877,17 @@ class VarianceRatio(UnitRootTest):
                  robust=True, overlap=True):
         if lags < 2:
             raise ValueError('lags must be an integer larger than 2')
+        self._valid_trends = ('nc', 'c')
         super(VarianceRatio, self).__init__(y, lags, trend)
         self._test_name = 'Variance-Ratio test'
-        self._h0 = 'The process is a random walk.'
-        self._h1 = 'The process is not a random walk.'
+        self._null_hypothesis = 'The process is a random walk.'
+        self._alternative_hypothesis = 'The process is not a random walk.'
         self._robust = robust
         self._debiased = debiased
         self._overlap = overlap
         self._vr = None
         self._stat_variance = None
+
         quantiles = array([.01, .05, .1, .9, .95, .99])
         self._critical_values = {}
         for q, cv in zip(quantiles, norm.ppf(quantiles)):
@@ -981,11 +984,6 @@ class VarianceRatio(UnitRootTest):
         self._vr = sigma2_q / sigma2_1
         self._stat = sqrt(nq) * (self._vr - 1) / sqrt(self._stat_variance)
         self._pvalue = 2 - 2 * norm.cdf(abs(self._stat))
-
-    @property
-    def valid_trends(self):
-        """Returns the list of value trend terms"""
-        return 'nc', 'c'
 
 
 # Wrapper before deprication

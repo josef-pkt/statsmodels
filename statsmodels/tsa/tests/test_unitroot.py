@@ -1,6 +1,6 @@
 # TODO: Tests for features that are just called
 # TODO: Test for trend='ctt'
-from __future__ import division
+from __future__ import print_function, division
 
 import numpy as np
 from numpy.testing import (assert_almost_equal, assert_equal, assert_raises)
@@ -218,8 +218,8 @@ class TestUnitRoot(object):
         assert len(adf.valid_trends) == len(('nc', 'c', 'ct', 'ctt'))
         for d in adf.valid_trends:
             assert d in ('nc', 'c', 'ct', 'ctt')
-        assert adf.h0 == 'The process contains a unit root.'
-        assert adf.hA == 'The process is weakly stationary.'
+        assert adf.null_hypothesis == 'The process contains a unit root.'
+        assert adf.alternative_hypothesis == 'The process is weakly stationary.'
 
     def test_kpss_auto(self):
         kpss = KPSS(self.inflation)
@@ -364,13 +364,8 @@ class TestUnitRoot(object):
 
     def test_variance_ratio_generic(self):
         # TODO: Currently not a test, just makes sure code runs at all
-        y = np.random.randn(100, 1).cumsum()
-        vr = VarianceRatio(y)
-        print vr.summary()
-
-    def test_base_class(self):
-        assert_raises(NotImplementedError, UnitRootTest,
-                      self.inflation, 0, 'nc')
+        vr = VarianceRatio(self.inflation, lags=24)
+        print(vr.summary())
 
 
 if __name__ == "__main__":
