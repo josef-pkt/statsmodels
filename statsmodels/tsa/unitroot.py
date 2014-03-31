@@ -70,7 +70,8 @@ def _df_select_lags(y, trend, max_lags, method):
 
     Notes
     -----
-    See statsmodels.tsa.tsatools._autolag for details
+    See statsmodels.tsa.tsatools._autolag for details.  If max_lags is None, the
+    default value of 12 * (nobs/100)**(1/4) is used.
     """
     nobs = y.shape[0]
     delta_y = diff(y)
@@ -79,8 +80,8 @@ def _df_select_lags(y, trend, max_lags, method):
         max_lags = int(ceil(12. * power(nobs / 100., 1 / 4.)))
 
     rhs = lagmat(delta_y[:, None], max_lags, trim='both', original='in')
-    nobs = rhs.shape[0]  # pylint: disable=E1103
-    rhs[:, 0] = y[-nobs - 1:-1]  # replace 0 xdiff with level of x
+    nobs = rhs.shape[0]
+    rhs[:, 0] = y[-nobs - 1:-1]  # replace 0 with level of y
     lhs = delta_y[-nobs:]
 
     if trend != 'nc':
@@ -91,8 +92,7 @@ def _df_select_lags(y, trend, max_lags, method):
     start_lag = full_rhs.shape[1] - rhs.shape[1] + 1
     # TODO: Remove all_res after adfuller deprication
     ic_best, best_lag, all_res = _autolag(OLS, lhs, full_rhs, start_lag,
-                                          max_lags,
-                                          method, regresults=True)
+                                          max_lags, method, regresults=True)
     # To get the correct number of lags, subtract the start_lag since
     # lags 0,1,...,start_lag-1 were not actual lags, but other variables
     best_lag -= start_lag
@@ -118,8 +118,8 @@ def _estimate_df_regression(y, trend, lags):
 
     Notes
     -----
-    See statsmodels.regression.linear_model.OLS for details on the
-    value returned
+    See statsmodels.regression.linear_model.OLS for details on the results
+    returned
     """
     delta_y = diff(y)
 
@@ -134,7 +134,7 @@ def _estimate_df_regression(y, trend, lags):
     return OLS(lhs, rhs).fit()
 
 
-def ensure_1d(y):
+def ensure_1d(y, var_name=None):
     """Returns a 1d array if the input is squeezable to 1d. Otherwise raises
     and error
 
@@ -150,19 +150,23 @@ def ensure_1d(y):
     """
     y = squeeze(asarray(y))
     if y.ndim != 1:
-        raise ValueError('Input must be 1d or squeezable to 1d.')
+        if var_name is None:
+            var_name = 'Input'
+        err_msg = '{var_name} must be 1d or squeezable to 1d.'
+        raise ValueError(err_msg.format(var_name=var_name))
     return y
 
 
 class UnitRootTest(object):
     """Base class to be used for inheritance in unit root tests"""
 
-    def __init__(self, y, lags, trend):
+    def __init__(self, y, lags, trend, valid_trends):
         self._y = ensure_1d(y)
         self._delta_y = diff(y)
         self._nobs = self._y.shape[0]
         self._lags = None
         self.lags = lags
+        self._valid_trends = valid_trends
         self._trend = None
         self.trend = trend
         self._stat = None
@@ -175,7 +179,6 @@ class UnitRootTest(object):
         self._title = None
         self._summary_text = None
 
-
     def __str__(self):
         return self.summary().__str__()
 
@@ -183,31 +186,38 @@ class UnitRootTest(object):
         return str(type(self)) + '\n"""\n' + self.__str__() + '\n"""'
 
     def _repr_html_(self):
-        """Display as HTML for IPython notebook."""
+        """Display as HTML for IPython notebook.
+        """
         return self.summary().as_html()
 
     def _compute_statistic(self):
         """This is the core routine that computes the test statistic, computes
-        the p-value and constructs the critical values."""
+        the p-value and constructs the critical values.
+        """
         raise NotImplementedError("Subclass must implement")
 
     def _reset(self):
-        """Resets the unit root test so that it will be recomputed"""
+        """Resets the unit root test so that it will be recomputed
+        """
         self._stat = None
 
     def _compute_if_needed(self):
-        """Checks if statistic needs to be computed"""
+        """Checks whether the statistic needs to be computed, and computed if
+        needed
+        """
         if self._stat is None:
             self._compute_statistic()
 
     @property
     def null_hypothesis(self):
-        """The null hypothesis"""
+        """The null hypothesis
+        """
         return self._null_hypothesis
 
     @property
     def alternative_hypothesis(self):
-        """The alternative hypothesis"""
+        """The alternative hypothesis
+        """
         return self._alternative_hypothesis
 
     @property
@@ -223,37 +233,38 @@ class UnitRootTest(object):
 
     @property
     def pvalue(self):
-        """Returns the p-value for the test statistic"""
+        """Returns the p-value for the test statistic
+        """
         self._compute_if_needed()
         return self._pvalue
 
     @property
     def stat(self):
-        """The test statistic for a unit root"""
+        """The test statistic for a unit root
+        """
         self._compute_if_needed()
         return self._stat
 
     @property
     def critical_values(self):
-        """Dictionary containing critical values"""
+        """Dictionary containing critical values specific to the test, number of
+        observations and included deterministic trend terms.
+        """
         self._compute_if_needed()
         return self._critical_values
 
     def summary(self):
         """Summary of test, containing statistic, p-value and critical values
         """
-        data = [('Test Statistic', '{0:0.3f}'.format(self.stat)),
-                ('P-value', '{0:0.3f}'.format(self.pvalue)),
-                ('Lags', '{0:d}'.format(self.lags))]
-        width = 15
-        formatted_text = '{0:<' + str(width) + '} {1:>' + str(width) + '}'
-        table_data = []
-        for label, val in data:
-            table_data.append([formatted_text.format(label, val)])
+        table_data = [('Test Statistic', '{0:0.3f}'.format(self.stat)),
+                      ('P-value', '{0:0.3f}'.format(self.pvalue)),
+                      ('Lags', '{0:d}'.format(self.lags))]
         title = self._title
+
         if not title:
             title = self._test_name + " Results"
-        table = SimpleTable(table_data, stubs=None, title=title)
+        table = SimpleTable(table_data, stubs=None, title=title, colwidths=18,
+                            datatypes=[0, 1], data_aligns=("l", "r"))
 
         smry = Summary()
         smry.tables.append(table)
@@ -283,9 +294,10 @@ class UnitRootTest(object):
     @property
     def lags(self):
         """Sets or gets the number of lags used in the model.
-        WHen tests use DF-type regressions, lags is the number of lags in the
+        When tests use DF-type regressions, lags is the number of lags in the
         regression model.  When tests use long-run variance estimators, lags
-        is the number of lags used in the long-run variance estimator."""
+        is the number of lags used in the long-run variance estimator.
+        """
         self._compute_if_needed()
         return self._lags
 
@@ -301,12 +313,15 @@ class UnitRootTest(object):
 
     @property
     def y(self):
-        """Returns the data used in the test"""
+        """Returns the data used in the test statistic
+        """
         return self._y
 
     @property
     def trend(self):
-        """Sets or gets the trend term"""
+        """Sets or gets the deterministic trend term used in the test. See
+        valid_trends for a list of supported trends
+        """
         return self._trend
 
     @trend.setter
@@ -349,7 +364,7 @@ class ADF(UnitRootTest):
     pvalues
     critical_values
     null_hypothesis
-    hA
+    alternative_hypothesis
     summary
     regression
     valid_trends
@@ -395,8 +410,8 @@ class ADF(UnitRootTest):
 
     def __init__(self, y, lags=None, trend='c',
                  max_lags=None, method='AIC'):
-        self._valid_trends = ('nc', 'c', 'ct', 'ctt')
-        super(ADF, self).__init__(y, lags, trend)
+        valid_trends = ('nc', 'c', 'ct', 'ctt')
+        super(ADF, self).__init__(y, lags, trend, valid_trends)
         self._max_lags = max_lags
         self._method = method
         self._test_name = 'Augmented Dickey-Fuller'
@@ -435,7 +450,8 @@ class ADF(UnitRootTest):
 
     @property
     def regression(self):
-        """Returns the OLS regression results from the ADF model estimated"""
+        """Returns the OLS regression results from the ADF model estimated
+        """
         self._compute_if_needed()
         return self._regression
 
@@ -471,7 +487,7 @@ class DFGLS(UnitRootTest):
     pvalues
     critical_values
     null_hypothesis
-    hA
+    alternative_hypothesis
     summary
     regression
     valid_trends
@@ -504,8 +520,8 @@ class DFGLS(UnitRootTest):
 
     def __init__(self, y, lags=None, trend='c',
                  max_lags=None, method='AIC'):
-        self._valid_trends = ('c', 'ct')
-        super(DFGLS, self).__init__(y, lags, trend)
+        valid_trends = ('c', 'ct')
+        super(DFGLS, self).__init__(y, lags, trend, valid_trends)
         self._max_lags = max_lags
         self._method = method
         self._regression = None
@@ -573,7 +589,8 @@ class DFGLS(UnitRootTest):
 
     @property
     def regression(self):
-        """Returns the OLS regression results from the ADF model estimated"""
+        """Returns the OLS regression results from the ADF model estimated
+        """
         self._compute_if_needed()
         return self._regression
 
@@ -606,7 +623,7 @@ class PhillipsPerron(UnitRootTest):
     critical_values
     test_type
     null_hypothesis
-    hA
+    alternative_hypothesis
     summary
     valid_trends
     y
@@ -658,12 +675,12 @@ class PhillipsPerron(UnitRootTest):
     """
 
     def __init__(self, y, lags=None, trend='c', test_type='tau'):
-        self._valid_trends = ('nc', 'c', 'ct')
-        super(PhillipsPerron, self).__init__(y, lags, trend)
+        valid_trends = ('nc', 'c', 'ct')
+        super(PhillipsPerron, self).__init__(y, lags, trend, valid_trends)
         self._test_type = test_type
         self._stat_rho = None
         self._stat_tau = None
-        self._test_name = 'Phillips-Perron'
+        self._test_name = 'Phillips-Perron Test'
         self._lags = lags
 
 
@@ -718,7 +735,7 @@ class PhillipsPerron(UnitRootTest):
                                  "5%": critical_values[1],
                                  "10%": critical_values[2]}
 
-        self._title = self._test_name + ', Test Type Z-' + self._test_type
+        self._title = self._test_name + ' (Z-' + self._test_type + ')'
 
     @property
     def test_type(self):
@@ -757,7 +774,7 @@ class KPSS(UnitRootTest):
     critical_values
     test_type
     null_hypothesis
-    hA
+    alternative_hypothesis
     summary
     valid_trends
     y
@@ -786,8 +803,8 @@ class KPSS(UnitRootTest):
     """
 
     def __init__(self, y, lags=None, trend='c'):
-        self._valid_trends = ('c', 'ct')
-        super(KPSS, self).__init__(y, lags, trend)
+        valid_trends = ('c', 'ct')
+        super(KPSS, self).__init__(y, lags, trend, valid_trends)
         self._test_name = 'KPSS Stationarity Test'
         self._null_hypothesis = 'The process is weakly stationary.'
         self._alternative_hypothesis = 'The process contains a unit root.'
@@ -845,7 +862,7 @@ class VarianceRatio(UnitRootTest):
     critical_values
     test_type
     null_hypothesis
-    hA
+    alternative_hypothesis
     summary
     valid_trends
     y
@@ -877,9 +894,9 @@ class VarianceRatio(UnitRootTest):
                  robust=True, overlap=True):
         if lags < 2:
             raise ValueError('lags must be an integer larger than 2')
-        self._valid_trends = ('nc', 'c')
-        super(VarianceRatio, self).__init__(y, lags, trend)
-        self._test_name = 'Variance-Ratio test'
+        valid_trends = ('nc', 'c')
+        super(VarianceRatio, self).__init__(y, lags, trend, valid_trends)
+        self._test_name = 'Variance-Ratio Test'
         self._null_hypothesis = 'The process is a random walk.'
         self._alternative_hypothesis = 'The process is not a random walk.'
         self._robust = robust
@@ -887,7 +904,6 @@ class VarianceRatio(UnitRootTest):
         self._overlap = overlap
         self._vr = None
         self._stat_variance = None
-
         quantiles = array([.01, .05, .1, .9, .95, .99])
         self._critical_values = {}
         for q, cv in zip(quantiles, norm.ppf(quantiles)):
