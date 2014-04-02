@@ -4,6 +4,7 @@ from __future__ import print_function, division
 
 import numpy as np
 from numpy.testing import (assert_almost_equal, assert_equal, assert_raises)
+from numpy.testing.decorators import skipif
 from numpy import log, polyval, diff, ceil, ones
 
 from statsmodels.tsa.unitroot import (ADF, adfuller, DFGLS, ensure_1d,
@@ -12,6 +13,7 @@ from statsmodels.tsa.unitroot import (ADF, adfuller, DFGLS, ensure_1d,
 from statsmodels.tsa.critical_values.dickey_fuller import tau_2010
 from statsmodels.datasets import macrodata
 import warnings
+import sys
 
 DECIMAL_5 = 5
 DECIMAL_4 = 4
@@ -19,6 +21,7 @@ DECIMAL_3 = 3
 DECIMAL_2 = 2
 DECIMAL_1 = 1
 
+PYTHON_LT_27 = sys.version_info[0] == 2 and sys.version_info[1] <= 6
 
 def test_adf_autolag():
     #see issue #246
@@ -243,9 +246,13 @@ class TestUnitRoot(object):
         assert pp.test_type == 'tau'
         pp.test_type = 'rho'
         assert_almost_equal(pp.stat, -108.1552688, DECIMAL_2)
+        pp.summary()
+
+    @skipif(PYTHON_LT_27)
+    def test_pp_bad_type(self):
+        pp = PhillipsPerron(self.inflation, lags=12)
         with assert_raises(ValueError):
             pp.test_type = 'unknown'
-        pp.summary()
 
     def test_pp_auto(self):
         pp = PhillipsPerron(self.inflation)
@@ -272,19 +279,26 @@ class TestUnitRoot(object):
         dfgls = DFGLS(self.inflation, trend='ct', method='BIC', max_lags=3)
         assert_equal(dfgls.lags, 2)
         assert_almost_equal(dfgls.stat, -2.9035369, DECIMAL_4)
+
+    @skipif(PYTHON_LT_27)
+    def test_dfgls_bad_trend(self):
+        dfgls = DFGLS(self.inflation, trend='ct', method='BIC', max_lags=3)
         with assert_raises(ValueError):
             dfgls.trend = 'nc'
 
         assert dfgls != 0.0
 
+    @skipif(PYTHON_LT_27)
     def test_ensure_1d(self):
         assert_raises(ValueError, ensure_1d, *(ones((2, 2)),))
 
+    @skipif(PYTHON_LT_27)
     def test_negative_lag(self):
         adf = ADF(self.inflation)
         with assert_raises(ValueError):
             adf.lags = -1
 
+    @skipif(PYTHON_LT_27)
     def test_invalid_determinstic(self):
         adf = ADF(self.inflation)
         with assert_raises(ValueError):
@@ -358,6 +372,7 @@ class TestUnitRoot(object):
         assert_almost_equal(ratio, vr.vr)
         assert_equal(vr.debiased, False)
 
+    @skipif(PYTHON_LT_27)
     def test_variance_ratio_invalid_lags(self):
         y = self.inflation
         assert_raises(ValueError, VarianceRatio, y, lags=1)

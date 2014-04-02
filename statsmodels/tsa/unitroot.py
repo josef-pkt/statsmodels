@@ -993,7 +993,7 @@ class VarianceRatio(UnitRootTest):
             z2 = (delta_y - mu) ** 2.0
             scale = sum(z2) ** 2.0
             theta = 0.0
-            for k in arange(1.0, q):
+            for k in arange(1, q, dtype=int):
                 delta = nq * z2[k:].dot(z2[:-k]) / scale
                 theta += (1 - k / q) ** 2.0 * delta
             self._stat_variance = theta
