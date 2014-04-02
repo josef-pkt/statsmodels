@@ -9,11 +9,33 @@ from statsmodels.compatnp.py3k import string_types
 import pandas as pd
 from pandas.tseries import offsets
 from pandas.tseries.frequencies import to_offset
+from warnings import warn
 
 
 __all__ = ['lagmat', 'lagmat2ds', 'add_trend', 'duplication_matrix',
            'elimination_matrix', 'commutation_matrix',
-           'vec', 'vech', 'unvec', 'unvech', 'reintegrate']
+           'vec', 'vech', 'unvec', 'unvech', 'reintegrate', 'coint',
+           'adfuller']
+
+
+def adfuller(*args, **kwargs):
+    """See statsmodels.tsa.tsatools.adfuller"""
+    import unitroot
+
+    func = np.deprecate(unitroot.adfuller,
+                        old_name='statsmodels.tsa.tsatools.adfuller',
+                        new_name='statsmodels.tsa.unitroot.ADF')
+    return func(*args, **kwargs)
+
+
+def coint(*args, **kwargs):
+    """See statsmodels.tsa.cointegration.coint"""
+    import cointegration
+
+    func = np.deprecate(cointegration.coint,
+                        old_name='statsmodels.tsa.tsatools.coint',
+                        new_name='statsmodels.tsa.cointegration.coint')
+    return func(*args, **kwargs)
 
 
 class ColumnNameConflict(Warning):
@@ -39,7 +61,8 @@ def _enforce_unique_col_name(existing, new):
                 fixed_name = n + '_' + str(duplicate_count)
                 duplicate_count += 1
             unique_names[i] = fixed_name
-            converted_names.append('{0}   ->   {1}'.format(original_name, fixed_name))
+            converted_names.append(
+                '{0}   ->   {1}'.format(original_name, fixed_name))
     if converted_names:
         import warnings
 

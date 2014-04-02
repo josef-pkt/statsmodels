@@ -8,7 +8,6 @@ from numpy.random import randn
 from numpy.testing import assert_array_almost_equal, assert_equal, assert_raises
 import pandas as pd
 from nose import SkipTest
-from nose.tools import nottest
 from pandas.util.testing import assert_frame_equal, assert_produces_warning
 
 import statsmodels.tsa.tsatools as tools
@@ -64,7 +63,6 @@ def test_pacf_yw():
     #assert False
 
 
-@nottest
 def test_pacf_ols():
     pacfols = tsa.pacf_ols(x100, 20)
     assert_array_almost_equal(mlpacf.pacf100.ravel(), pacfols, 8)
@@ -274,13 +272,16 @@ def test_add_lag_drop_noinsert():
     lag_data = sm.tsa.add_lag(data, 'realgdp', 3, insert=False, drop=True)
     assert_equal(lag_data.values, results)
 
+
 def test_freq_to_period():
     from pandas.tseries.frequencies import to_offset
+
     freqs = ['A', 'AS-MAR', 'Q', 'QS', 'QS-APR', 'W', 'W-MON', 'B']
     expected = [1, 1, 4, 4, 4, 52, 52, 52]
     for i, j in zip(freqs, expected):
         assert_equal(tools.freq_to_period(i), j)
         assert_equal(tools.freq_to_period(to_offset(i)), j)
+
 
 def test_add_lag_drop_insert_early():
     x = randn(5, 3)
