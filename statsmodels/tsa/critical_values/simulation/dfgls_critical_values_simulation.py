@@ -9,7 +9,7 @@ from statsmodels.tools.parallel import parallel_func
 
 # Controls memory use, in MiB
 MAX_MEMORY_SIZE = 100
-NUM_JOBS = 3
+NUM_JOBS = 4
 
 
 def wrapper(n, deterministic, b, seed=0):
