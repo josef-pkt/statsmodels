@@ -1,8 +1,5 @@
 import numpy as np
-from scipy.stats import norm
-
-from statsmodels.regression.linear_model import OLS, WLS
-
+from statsmodels.regression.linear_model import OLS
 
 trends = ('nc', 'c', 'ct', 'ctt')
 critical_values = (1.0, 5.0, 10.0)

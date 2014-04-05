@@ -1,9 +1,9 @@
 """
-Contains values used to approximate the critical value and
-p-value from DFGLS statistics
+Contains values used to approximate the critical value and p-value from DFGLS
+statistics
 
-These have been computed using the methodology of MacKinnon (1994) and (2010).
-simulation.
+These have been computed using the methodology of MacKinnon (1994) and (2010)
+simulation. See dfgls_critival_values_simulation for implementation.
 """
 
 from numpy import array

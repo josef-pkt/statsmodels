@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from scipy.stats import norm
 
@@ -8,10 +9,10 @@ trends = ('c', 'ct')
 critical_values = (1.0, 5.0, 10.0)
 dfgls_cv_approx = {}
 for t in trends:
-    print t
+    print(t)
     data = np.load('dfgls_' + t + '.npz')
     percentiles = data['percentiles']
-    deterministic = data['deterministic']
+    trend = data['trend']
     results = data['results']
     # T = data['T']
     data.close()
@@ -103,16 +104,16 @@ for t in trends:
     # Compute tau min
     dfgls_tau_min[t] = -params[1] / (2 * params[2])
 
-print 'from numpy import array'
-print ''
-print 'dfgls_cv_approx = ' + str(dfgls_cv_approx)
-print ''
-print 'dfgls_tau_max = ' + str(dfgls_tau_max)
-print ''
-print 'dfgls_tau_min = ' + str(dfgls_tau_min)
-print ''
-print 'dfgls_tau_star = ' + str(dfgls_tau_star)
-print ''
-print 'dfgls_large_p = ' + str(dfgls_large_p)
-print ''
-print 'dfgls_small_p = ' + str(dfgls_small_p)
+print('from numpy import array')
+print('')
+print('dfgls_cv_approx = ' + str(dfgls_cv_approx))
+print('')
+print('dfgls_tau_max = ' + str(dfgls_tau_max))
+print('')
+print('dfgls_tau_min = ' + str(dfgls_tau_min))
+print('')
+print('dfgls_tau_star = ' + str(dfgls_tau_star))
+print('')
+print('dfgls_large_p = ' + str(dfgls_large_p))
+print('')
+print('dfgls_small_p = ' + str(dfgls_small_p))
