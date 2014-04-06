@@ -125,6 +125,9 @@ for tr in trends:
         #out = lmap(wrapper, T, [tr] * m, [EX_SIZE] * m, [seeds[i]] * m))
         now = datetime.datetime.now()
         out = lview.map_sync(wrapper, T, [tr] * m, [EX_SIZE] * m, [seeds[i]] * m)
+        # Prevent unnecessary results from accumulating
+        lview.purge_results('all')
+        rc.purge_everything()
         print(datetime.datetime.now() - now)
         q = lambda x: percentile(x, percentiles)
         quantiles = lmap(q, out)
