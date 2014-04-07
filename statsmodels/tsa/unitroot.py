@@ -1,3 +1,4 @@
+# TODO: Python 3 compatability: map, range, long
 from __future__ import division
 
 import warnings
@@ -16,16 +17,8 @@ from statsmodels.tsa.critical_values.kpss import *
 from statsmodels.tsa.critical_values.dfgls import *
 from statsmodels.iolib.summary import Summary
 from statsmodels.iolib.table import SimpleTable
-
-
-class InvalidLengthWarning(Warning):
-    pass
-
-
-invalid_length_doc = """
-The length of {var} is not an exact multiple of {block}, and so the final {drop}
-observations have been dropped.
-"""
+from statsmodels.tools.sm_exceptions import (InvalidLengthWarning,
+                                             invalid_length_doc)
 
 deprication_doc = """
 {old_func} has been depricated.  Please use {new_func}.
@@ -167,7 +160,7 @@ class UnitRootTest(object):
         self._lags = None
         self.lags = lags
         self._valid_trends = valid_trends
-        self._trend = None
+        self._trend = ''
         self.trend = trend
         self._stat = None
         self._critical_values = None
@@ -420,7 +413,6 @@ class ADF(UnitRootTest):
         self._ic_best = None  # For compat with adfuller
         self._autolag_results = None  # For compat with adfuller
 
-
     def _select_lag(self):
         ic_best, best_lag, all_res = _df_select_lags(self._y,
                                                      self._trend,
@@ -530,7 +522,6 @@ class DFGLS(UnitRootTest):
             self._c = -7.0
         else:
             self._c = -13.5
-
 
     def _compute_statistic(self):
         """Core routine to estimate DF-GLS test statistic"""
@@ -713,9 +704,9 @@ class PhillipsPerron(UnitRootTest):
         rho = resols.params[0]
         # 3. Compute statistics
         self._stat_tau = sqrt(gamma0 / lam2) * ((rho - 1) / sigma) \
-                         - 0.5 * ((lam2 - gamma0) / lam) * (n * sigma / s)
+            - 0.5 * ((lam2 - gamma0) / lam) * (n * sigma / s)
         self._stat_rho = n * (rho - 1) \
-                         - 0.5 * (n ** 2.0 * sigma2 / s2) * (lam2 - gamma0)
+            - 0.5 * (n ** 2.0 * sigma2 / s2) * (lam2 - gamma0)
 
         self._nobs = int(resols.nobs)
         if self._test_type == 'rho':
@@ -808,7 +799,6 @@ class KPSS(UnitRootTest):
         self._test_name = 'KPSS Stationarity Test'
         self._null_hypothesis = 'The process is weakly stationary.'
         self._alternative_hypothesis = 'The process contains a unit root.'
-
 
     def _compute_statistic(self):
         # 1. Estimate model with trend
@@ -993,7 +983,7 @@ class VarianceRatio(UnitRootTest):
             z2 = (delta_y - mu) ** 2.0
             scale = sum(z2) ** 2.0
             theta = 0.0
-            for k in arange(1, q, dtype=int):
+            for k in range(1, q):
                 delta = nq * z2[k:].dot(z2[:-k]) / scale
                 theta += (1 - k / q) ** 2.0 * delta
             self._stat_variance = theta
@@ -1113,7 +1103,7 @@ def adfuller(x, maxlag=None, regression="c", autolag='AIC',
     icbest = adf._ic_best
     resstore = adf
     if regresults:
-        # Work arounds for missing properties
+        # Work around for missing properties
         setattr(resstore, 'autolag_results', resstore._autolag_results)
         setattr(resstore, 'usedlag', resstore.lags)
         return adfstat, pvalue, critvalues, resstore
