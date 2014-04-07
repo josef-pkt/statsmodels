@@ -8,7 +8,7 @@ on the local machine.  This can be started using a command similar to
 Remote clusters can be used by modifying the call to Client.
 """
 from __future__ import division, print_function
-#from statsmodels.compat import range, lmap
+# from statsmodels.compat import range, lmap
 from statsmodels.tools.parallel import parallel_func
 import datetime
 from numpy import array, savez, percentile, nan

@@ -3,7 +3,7 @@ Critical value simulation for the Dickey-Fuller GLS model.  Similar in design to
 MacKinnon (2010).  Makes use of parallel_fun in statsmodels which works best when
 joblib is installed.
 """
-from __future__ import division
+from __future__ import division, print_function
 import datetime
 
 from numpy import ones, vstack, arange, diff, cumsum, sqrt, sum
@@ -103,8 +103,8 @@ if __name__ == '__main__':
         results = np.zeros((len(percentiles), len(T), EX_NUM))
 
         for i in xrange(EX_NUM):
-            print "Experiment Number {0} of {1} (trend {2})".format(i + 1,
-                                                                    EX_NUM, tr)
+            print("Experiment Number {0} of {1} (trend {2})".format(i + 1,
+                                                                    EX_NUM, tr))
             now = datetime.datetime.now()
             parallel, p_func, n_jobs = parallel_func(wrapper,
                                                      n_jobs=NUM_JOBS,
@@ -113,8 +113,8 @@ if __name__ == '__main__':
             q = lambda x: np.percentile(x, percentiles)
             quantiles = map(q, out)
             results[:, :, i] = np.array(quantiles).T
-            print 'Elapsed time {0} seconds'.format(
-                datetime.datetime.now() - now)
+            print('Elapsed time {0} seconds'.format(
+                datetime.datetime.now() - now))
 
             if i % 50 == 0:
                 np.savez('dfgls_' + tr + '.npz',

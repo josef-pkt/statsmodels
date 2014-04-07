@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 from statsmodels.regression.linear_model import OLS
 
@@ -5,7 +6,7 @@ trends = ('nc', 'c', 'ct', 'ctt')
 critical_values = (1.0, 5.0, 10.0)
 adf_z_cv_approx = {}
 for t in trends:
-    print t
+    print(t)
     data = np.load('adf_z_' + t + '.npz')
     percentiles = data['percentiles']
     trend = data['trend']
@@ -43,6 +44,6 @@ for t in trends:
 
     adf_z_cv_approx[t] = np.array(out)
 
-print 'from numpy import array'
-print ''
-print 'adf_z_cv_approx = ' + str(adf_z_cv_approx)
+print('from numpy import array')
+print('')
+print('adf_z_cv_approx = ' + str(adf_z_cv_approx))

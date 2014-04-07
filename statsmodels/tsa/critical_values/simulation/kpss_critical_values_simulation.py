@@ -2,7 +2,7 @@
 Calculates quantiles of the KPSS test statistic for both the constant
 and constant plus trend scenarios.
 """
-from __future__ import division
+from __future__ import division, print_function
 import os
 from numpy.random import RandomState
 import numpy as np
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     for tr in ('c', 'ct'):
         now = dt.datetime.now()
         kpss = wrapper(nobs, B, trend=tr)
-        print dt.datetime.now() - now
+        print(dt.datetime.now() - now)
         quantiles = np.percentile(kpss, list(percentiles))
         df = pd.DataFrame(quantiles, index=critical_values, columns=[tr])
         df.to_hdf(hdf_filename, key=tr, mode='a')
