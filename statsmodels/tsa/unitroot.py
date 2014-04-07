@@ -4,10 +4,9 @@ from __future__ import division
 import warnings
 
 from numpy import (diff, ceil, power, squeeze, sqrt, sum, cumsum, int32, int64,
-                   interp, abs, log, arange, sort)
+                   interp, abs, log, sort, polyval)
 from numpy.linalg import pinv
 from scipy.stats import norm
-from numpy import polyval
 
 from statsmodels.regression.linear_model import OLS
 from statsmodels.tsa.tsatools import lagmat, add_trend
@@ -673,7 +672,6 @@ class PhillipsPerron(UnitRootTest):
         self._stat_tau = None
         self._test_name = 'Phillips-Perron Test'
         self._lags = lags
-
 
     def _compute_statistic(self):
         """Core routine to estimate PP test statistics"""
