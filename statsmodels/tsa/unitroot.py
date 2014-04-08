@@ -353,7 +353,7 @@ class ADF(UnitRootTest):
     Attributes
     ----------
     stat
-    pvalues
+    pvalue
     critical_values
     null_hypothesis
     alternative_hypothesis
@@ -380,11 +380,27 @@ class ADF(UnitRootTest):
 
     Examples
     --------
-    see example script
+    >>> import numpy as np
+    >>> import statsmodels.api as sm
+    >>> data = sm.datasets.macrodata.load().data
+    >>> inflation = np.diff(np.log(data['cpi']))
+    >>> adf = sm.tsa.ADF(inflation)
+    >>> adf.stat
+    -3.093111891727883
+    >>> adf.pvalue
+    0.027067156654784364
+    >>> adf.lags
+    2L
+    >>> adf.trend='ct'
+    >>> adf.stat
+    -3.2111220810567316
+    >>> adf.pvalue
+    0.082208183131829649
 
     References
     ----------
-    Greene
+    Greene, W. H. 2011. Econometric Analysis. Prentice Hall: Upper Saddle River,
+    New Jersey.
 
     Hamilton, J. D. 1994. Time Series Analysis. Princeton: Princeton
     University Press.
@@ -475,7 +491,7 @@ class DFGLS(UnitRootTest):
     Attributes
     ----------
     stat
-    pvalues
+    pvalue
     critical_values
     null_hypothesis
     alternative_hypothesis
@@ -501,7 +517,22 @@ class DFGLS(UnitRootTest):
 
     Examples
     --------
-    see example script
+    >>> import numpy as np
+    >>> import statsmodels.api as sm
+    >>> data = sm.datasets.macrodata.load().data
+    >>> inflation = np.diff(np.log(data['cpi']))
+    >>> dfgls = sm.tsa.DFGLS(inflation)
+    >>> dfgls.stat
+    -2.7610943027494161
+    >>> dfgls.pvalue
+    0.0059024528170065768
+    >>> dfgls.lags
+    2L
+    >>> dfgls.trend = 'ct'
+    >>> dfgls.stat
+    -2.90355133529604
+    >>> dfgls.pvalue
+    0.044662612387444081
 
     References
     ----------
@@ -609,7 +640,7 @@ class PhillipsPerron(UnitRootTest):
     Attributes
     ----------
     stat
-    pvalues
+    pvalue
     critical_values
     test_type
     null_hypothesis
@@ -639,7 +670,27 @@ class PhillipsPerron(UnitRootTest):
 
     Examples
     --------
-    see example script
+    >>> import numpy as np
+    >>> import statsmodels.api as sm
+    >>> data = sm.datasets.macrodata.load().data
+    >>> inflation = np.diff(np.log(data['cpi']))
+    >>> pp = sm.tsa.PhillipsPerron(inflation)
+    >>> pp.stat
+    -8.1355784802409303
+    >>> pp.pvalue
+    1.061467301832819e-12
+    >>> pp.lags
+    15
+    >>> pp.trend = 'ct'
+    >>> pp.stat
+    -8.2021582107367514
+    >>> pp.pvalue
+    2.4367363200875479e-11
+    >>> pp.test_type = 'rho'
+    >>> pp.stat
+    -120.32706602359212
+    >>> pp.pvalue
+    0.0
 
     References
     ----------
@@ -759,9 +810,8 @@ class KPSS(UnitRootTest):
     Attributes
     ----------
     stat
-    pvalues
+    pvalue
     critical_values
-    test_type
     null_hypothesis
     alternative_hypothesis
     summary
@@ -782,7 +832,20 @@ class KPSS(UnitRootTest):
 
     Examples
     --------
-    see example script
+    >>> import numpy as np
+    >>> import statsmodels.api as sm
+    >>> data = sm.datasets.macrodata.load().data
+    >>> inflation = np.diff(np.log(data['cpi']))
+    >>> kpss = sm.tsa.KPSS(inflation)
+    >>> kpss.stat
+    0.28700886586311969
+    >>> kpss.pvalue
+    .14735012654422672
+    >>> kpss.trend = 'ct'
+    >>> kpss.stat
+    0.20749526406020977
+    >>> kpss.pvalue
+    .012834648872163952
 
     References
     ----------
@@ -846,9 +909,8 @@ class VarianceRatio(UnitRootTest):
     Attributes
     ----------
     stat
-    pvalues
+    pvalue
     critical_values
-    test_type
     null_hypothesis
     alternative_hypothesis
     summary
@@ -868,7 +930,20 @@ class VarianceRatio(UnitRootTest):
 
     Examples
     --------
-    see example script
+    >>> import datetime as dt
+    >>> from matplotlib.finance import fetch_historical_yahoo as yahoo
+    >>> csv = yahoo('^GSPC', dt.date(1950,1,1), dt.date(2010,1,1))
+    >>> import pandas as pd
+    >>> data = pd.DataFrame.from_csv(csv)
+    >>> data = data[::-1]
+    >>> data.resample('M',how='last')
+    >>> returns = data['Adj Close'].pct_change().dropna()
+    >>> import statsmodels.api as sm
+    >>> vr = sm.tsa.VarianceRatio(returns, lags=12)
+    >>> vr.stat
+    -23.021986263667511
+    >>> vr.pvalue
+    0.0
 
     References
     ----------
@@ -1071,9 +1146,11 @@ def adfuller(x, maxlag=None, regression="c", autolag='AIC',
 
     References
     ----------
-    Greene
-    Hamilton
+    Greene, W. H. 2011. Econometric Analysis. Prentice Hall: Upper Saddle River,
+    New Jersey.
 
+    Hamilton, J. D. 1994. Time Series Analysis. Princeton: Princeton
+    University Press.
 
     P-Values (regression surface approximation)
     MacKinnon, J.G. 1994.  "Approximate asymptotic distribution functions for
@@ -1290,7 +1367,7 @@ def kpss_crit(stat, trend='c'):
     x = table[:, 1]
     pvalue = interp(stat, x, y)
     cv = [1.0, 5.0, 10.0]
-    crit_value = interp(cv, y[::-1], x[::-1])
+    crit_value = interp(cv, y[::-1], x[::-1]) / 100.0
 
     return pvalue, crit_value
 

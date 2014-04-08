@@ -75,6 +75,11 @@ Descriptive Statistics and Tests
    stattools.grangercausalitytests
    stattools.levinson_durbin
    stattools.arma_order_select_ic
+   unitroot.ADF
+   unitroot.DFGLS
+   unitroot.KPSS
+   unitroot.PhillipsPerron
+   unitroot.VarianceRatio
 
 Estimation
 """"""""""
