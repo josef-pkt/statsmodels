@@ -19,8 +19,8 @@ from statsmodels.iolib.table import SimpleTable
 from statsmodels.tools.sm_exceptions import (InvalidLengthWarning,
                                              invalid_length_doc)
 
-deprication_doc = """
-{old_func} has been depricated.  Please use {new_func}.
+deprecation_doc = """
+{old_func} has been deprecated.  Please use {new_func}.
 """
 
 __all__ = ['ADF', 'DFGLS', 'PhillipsPerron', 'KPSS', 'VarianceRatio',
@@ -82,7 +82,7 @@ def _df_select_lags(y, trend, max_lags, method):
         full_rhs = rhs
 
     start_lag = full_rhs.shape[1] - rhs.shape[1] + 1
-    # TODO: Remove all_res after adfuller deprication
+    # TODO: Remove all_res after adfuller deprecation
     ic_best, best_lag, all_res = _autolag(OLS, lhs, full_rhs, start_lag,
                                           max_lags, method, regresults=True)
     # To get the correct number of lags, subtract the start_lag since
@@ -326,7 +326,8 @@ class UnitRootTest(object):
 
 
 class ADF(UnitRootTest):
-    """Augmented Dickey Fuller test
+    """
+    Augmented Dickey-Fuller unit root test
 
     Parameters
     ----------
@@ -424,7 +425,7 @@ class ADF(UnitRootTest):
         self._method = method
         self._test_name = 'Augmented Dickey-Fuller'
         self._regression = None
-        # TODO: Remove when adfuller is depricated
+        # TODO: Remove when adfuller is deprecation
         self._ic_best = None  # For compat with adfuller
         self._autolag_results = None  # For compat with adfuller
 
@@ -433,7 +434,7 @@ class ADF(UnitRootTest):
                                                      self._trend,
                                                      self._max_lags,
                                                      self._method)
-        # TODO: Remove when adfuller is depricated
+        # TODO: Remove when adfuller is deprecated
         self._autolag_results = all_res
         self._ic_best = ic_best
         self._lags = best_lag
@@ -464,7 +465,8 @@ class ADF(UnitRootTest):
 
 
 class DFGLS(UnitRootTest):
-    """Elliott, Rothenberg and Stock's GLS version of the Dickey-Fuller test
+    """
+    Elliott, Rothenberg and Stock's GLS version of the Dickey-Fuller test
 
     Parameters
     ----------
@@ -617,7 +619,8 @@ class DFGLS(UnitRootTest):
 
 
 class PhillipsPerron(UnitRootTest):
-    """Phillips-Perron unit root test
+    """
+    Phillips-Perron unit root test
 
     Parameters
     ----------
@@ -792,7 +795,8 @@ class PhillipsPerron(UnitRootTest):
 
 
 class KPSS(UnitRootTest):
-    """Kwiatkowski, Phillips, Schmidt and Shin (1992, KPSS) stationarity test
+    """
+    Kwiatkowski, Phillips, Schmidt and Shin (KPSS) stationarity test
 
     Parameters
     ----------
@@ -935,8 +939,8 @@ class VarianceRatio(UnitRootTest):
     >>> csv = yahoo('^GSPC', dt.date(1950,1,1), dt.date(2010,1,1))
     >>> import pandas as pd
     >>> data = pd.DataFrame.from_csv(csv)
-    >>> data = data[::-1]
-    >>> data.resample('M',how='last')
+    >>> data = data[::-1]  # Reverse
+    >>> data.resample('M',how='last')  # End of month
     >>> returns = data['Adj Close'].pct_change().dropna()
     >>> import statsmodels.api as sm
     >>> vr = sm.tsa.VarianceRatio(returns, lags=12)
@@ -969,6 +973,7 @@ class VarianceRatio(UnitRootTest):
         self._stat_variance = None
         quantiles = array([.01, .05, .1, .9, .95, .99])
         self._critical_values = {}
+        self._summary_text = ''
         for q, cv in zip(quantiles, norm.ppf(quantiles)):
             self._critical_values[str(int(100 * q)) + '%'] = cv
 
@@ -1039,14 +1044,17 @@ class VarianceRatio(UnitRootTest):
         if not overlap:
             delta_y_q = y[q::q] - y[0:-q:q]
             sigma2_q = sum((delta_y_q - q * mu) ** 2.0) / nq
+            self._summary_text = 'Computed with non-overlapping blocks'
         else:
             delta_y_q = y[q:] - y[:-q]
             sigma2_q = sum((delta_y_q - q * mu) ** 2.0) / (nq * q)
+            self._summary_text = 'Computed with overlapping blocks'
 
         if debiased and overlap:
             sigma2_1 *= nq / (nq - 1)
             m = q * (nq - q + 1) * (1 - (q / nq))
             sigma2_q *= (nq * q) / m
+            self._summary_text = 'Computed with overlapping blocks (de-biased)'
 
         if not overlap:
             self._stat_variance = 2.0 * (q - 1)
@@ -1065,7 +1073,7 @@ class VarianceRatio(UnitRootTest):
         self._pvalue = 2 - 2 * norm.cdf(abs(self._stat))
 
 
-# Wrapper before deprication
+# Wrapper before deprecation
 # See:
 # Ng and Perron(2001), Lag length selection and the construction of unit root
 # tests with good size and power, Econometrica, Vol 69 (6) pp 1519-1554
@@ -1074,7 +1082,7 @@ class VarianceRatio(UnitRootTest):
 def adfuller(x, maxlag=None, regression="c", autolag='AIC',
              store=False, regresults=False):
     """
-    Augmented Dickey-Fuller unit root test
+    Augmented Dickey-Fuller unit root test (Deprecated)
 
     The Augmented Dickey-Fuller test can be used to test for a unit root in a
     univariate process in the presence of serial correlation.
@@ -1127,7 +1135,7 @@ def adfuller(x, maxlag=None, regression="c", autolag='AIC',
 
     Notes
     -----
-    This function has been depricated. Please use ADF instead.
+    This function has been deprecated. Please use ADF instead.
 
     The null hypothesis of the Augmented Dickey-Fuller is that there is a unit
     root, with the alternative that there is no unit root. If the pvalue is
@@ -1163,7 +1171,7 @@ def adfuller(x, maxlag=None, regression="c", autolag='AIC',
     http://ideas.repec.org/p/qed/wpaper/1227.html
 
     """
-    warnings.warn(deprication_doc.format(old_func='adfuller', new_func='ADF'),
+    warnings.warn(deprecation_doc.format(old_func='adfuller', new_func='ADF'),
                   DeprecationWarning)
     lags = None
     if autolag is None:
@@ -1365,9 +1373,10 @@ def kpss_crit(stat, trend='c'):
     table = kpss_critical_values[trend]
     y = table[:, 0]
     x = table[:, 1]
-    pvalue = interp(stat, x, y)
+    # kpss.py contains quantiles multiplied by 100
+    pvalue = interp(stat, x, y) / 100.0
     cv = [1.0, 5.0, 10.0]
-    crit_value = interp(cv, y[::-1], x[::-1]) / 100.0
+    crit_value = interp(cv, y[::-1], x[::-1])
 
     return pvalue, crit_value
 

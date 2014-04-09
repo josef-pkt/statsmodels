@@ -41,7 +41,8 @@ structure is within statsmodels.tsa is
  - tsatools : additional helper functions, to create arrays of lagged variables,
    construct regressors for trend, detrend and similar.
  - filters : helper function for filtering time series
-
+ - unitroots : statistical test for stationarity
+ - cointegration : estimation and testing for cointegrated relationships
 
 
 Some additional functions that are also useful for time series analysis are in
@@ -70,7 +71,6 @@ Descriptive Statistics and Tests
    stattools.ccovf
    stattools.ccf
    stattools.periodogram
-   stattools.adfuller
    stattools.q_stat
    stattools.grangercausalitytests
    stattools.levinson_durbin
@@ -80,6 +80,8 @@ Descriptive Statistics and Tests
    unitroot.KPSS
    unitroot.PhillipsPerron
    unitroot.VarianceRatio
+   unitroot.adfuller
+   cointegration.coint
 
 Estimation
 """"""""""
