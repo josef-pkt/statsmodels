@@ -3,14 +3,13 @@ Statistical tools for time series analysis
 """
 from __future__ import division
 from statsmodels.compat.python import (iteritems, range, lrange, string_types, lzip,
-                                zip, map)
+                                zip, map, range)
 import numpy as np
 from numpy.linalg import LinAlgError
 from scipy import stats
 from statsmodels.regression.linear_model import OLS, yule_walker
 from statsmodels.tools.tools import add_constant, Bunch
 from .tsatools import lagmat, lagmat2ds, add_trend
-from .adfvalues import mackinnonp, mackinnoncrit
 from statsmodels.tsa.arima_model import ARMA
 from statsmodels.compat.scipy import _next_regular
 
@@ -65,7 +64,7 @@ def cov_nw(y, lags=0, demean=True, axis=0):
     if demean:
         z = z - z.mean(0)
     cov = z.T.dot(z)
-    for j in xrange(1, lags + 1):
+    for j in range(1, lags + 1):
         w = (1 - j / (lags + 1))
         gamma = z[j:].T.dot(z[:-j])
         cov += w * (gamma + gamma.T)

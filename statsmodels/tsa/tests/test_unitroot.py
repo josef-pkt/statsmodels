@@ -1,6 +1,7 @@
 # TODO: Tests for features that are just called
 # TODO: Test for trend='ctt'
 from __future__ import print_function, division
+from statsmodels.compat import iteritems
 
 import numpy as np
 from numpy.testing import (assert_almost_equal, assert_equal, assert_raises)
@@ -37,7 +38,7 @@ def test_adf_autolag():
         st2 = adf3[-1]
 
         assert_equal(len(st2.autolag_results), 15 + 1)   # +1 for lagged level
-        for l, res in sorted(st2.autolag_results.iteritems())[:5]:
+        for l, res in sorted(iteritems(st2.autolag_results))[:5]:
             lag = l - k_trend
             #assert correct design matrices in _autolag
             assert_equal(res.model.exog[-10:, k_trend], x[-11:-1])
@@ -204,7 +205,7 @@ class TestUnitRoot(object):
         adf_cv = adf.critical_values
         temp = polyval(tau_2010['c'][0, :, ::-1].T, 1. / adf.nobs)
         cv = {'1%': temp[0], '5%': temp[1], '10%': temp[2]}
-        for k, v in cv.iteritems():
+        for k, v in iteritems(cv):
             assert_almost_equal(v, adf_cv[k])
 
     def test_adf_auto_t_stat(self):
@@ -380,7 +381,6 @@ class TestUnitRoot(object):
     def test_variance_ratio_generic(self):
         # TODO: Currently not a test, just makes sure code runs at all
         vr = VarianceRatio(self.inflation, lags=24)
-        print(vr.summary())
 
 
 if __name__ == "__main__":

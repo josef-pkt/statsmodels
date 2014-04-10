@@ -1,5 +1,5 @@
 from __future__ import print_function
-import cStringIO
+from statsmodels.compat import iteritems, cStringIO
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,7 @@ c = pd.read_hdf('kpss_critical_values.h5', 'c')
 ct = pd.read_hdf('kpss_critical_values.h5', 'ct')
 
 data = {'c': c, 'ct': ct}
-for k, v in data.iteritems():
+for k, v in iteritems(data):
     n = v.shape[0]
     selected = np.zeros((n, 1), dtype=np.bool)
     selected[0] = True

@@ -1,10 +1,10 @@
 from statsmodels.compat.python import range, lrange, lzip
 import numpy as np
-from statsmodels.compatnp.py3k import string_types
+from statsmodels.compat import string_types
 import numpy as np
 import pandas as pd
 
-from statsmodels.compatnp.py3k import string_types
+from statsmodels.compat import string_types
 
 import pandas as pd
 from pandas.tseries import offsets
@@ -211,8 +211,8 @@ def add_lag(x, col=None, lags=1, drop=False, insert=True):
         ins_idx = insert
 
     ndlags = lagmat(contemporary, lags, trim='Both')
-    first_cols = range(ins_idx)
-    last_cols = range(ins_idx, x.shape[1])
+    first_cols = lrange(ins_idx)
+    last_cols = lrange(ins_idx, x.shape[1])
     if drop:
         if col in first_cols:
             first_cols.pop(first_cols.index(col))
@@ -224,7 +224,7 @@ def add_lag(x, col=None, lags=1, drop=False, insert=True):
         index = df.index
         # Create new column labels
         lag_columns = [str(columns[col]) + '_L_' + str(i + 1) for i in
-                       xrange(lags)]
+                       range(lags)]
         out_columns = [columns[col_idx] for col_idx in first_cols]
         out_columns.extend(lag_columns)
         for col_idx in last_cols:

@@ -1,4 +1,5 @@
 from __future__ import print_function
+from statsmodels.compat import range
 import numpy as np
 from scipy.stats import norm
 
@@ -97,7 +98,7 @@ for t in trends:
     # Find the location that minimizes the total absolute error
     m = lhs_large.shape[0]
     abs_err = np.zeros((m, 1))
-    for i in xrange(m):
+    for i in range(m):
         abs_err[i] = np.abs(err_large[i:]).sum() + np.abs(err_small[:i]).sum()
     loc = np.argmin(abs_err)
     dfgls_tau_star[t] = rhs_large[loc, 1]

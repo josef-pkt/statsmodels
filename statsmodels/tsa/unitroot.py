@@ -1,6 +1,5 @@
-# TODO: Python 3 compatability: map, range, long
 from __future__ import division
-
+from statsmodels.compat import lmap, range, long
 import warnings
 
 from numpy import (diff, ceil, power, squeeze, sqrt, sum, cumsum, int32, int64,
@@ -264,7 +263,7 @@ class UnitRootTest(object):
         cv_string = 'Critical Values: '
         cv = self._critical_values.keys()
         g = lambda x: float(x.split('%')[0])
-        cv_numeric = array(map(g, cv))
+        cv_numeric = array(lmap(g, cv))
         cv_numeric = sort(cv_numeric)
         for val in cv_numeric:
             p = str(int(val)) + '%'

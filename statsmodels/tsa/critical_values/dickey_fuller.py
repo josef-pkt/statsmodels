@@ -7,6 +7,7 @@ did not appear in the original paper and have been computed using an identical
 simulation.
 """
 from numpy import asarray, inf
+from statsmodels.compat import iteritems
 
 small_scaling = asarray([1, 1, 1e-2])
 tau_small_p = {}
@@ -245,7 +246,7 @@ adf_z_large_p = {'nc': [0.4927, 6.906, 13.2331, 12.099, 0],
                  'ctt': [3.4216, 0.4170, 1.6939, 0.4203, 0.4153]}
 
 adf_z_large_p_scale = asarray([1.0, 1.0, 1e-2, 1e-3, 1e-5])
-for k, v in adf_z_large_p.iteritems():
+for k, v in iteritems(adf_z_large_p):
     adf_z_large_p[k] = asarray(adf_z_large_p[k]) * adf_z_large_p_scale
 
 adf_z_cv_approx = {

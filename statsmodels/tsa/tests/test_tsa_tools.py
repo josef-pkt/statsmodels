@@ -3,6 +3,7 @@
 '''
 
 from statsmodels.compat.python import zip
+import warnings
 import numpy as np
 from numpy.random import randn
 from numpy.testing import assert_array_almost_equal, assert_equal, assert_raises
@@ -15,10 +16,6 @@ from statsmodels.tsa.tsatools import vec, vech, reintegrate, unvec
 import statsmodels.api as sm
 import statsmodels.tsa.stattools as tsa
 from statsmodels.regression.linear_model import OLS
-from statsmodels.tsa.tests.results import savedrvs
-from statsmodels.tsa.tests.results.datamlw_tls import mlacf, mlccf, mlpacf, \
-    mlywar
-
 from .results import savedrvs
 from .results.datamlw_tls import mlacf, mlccf, mlpacf, mlywar
 

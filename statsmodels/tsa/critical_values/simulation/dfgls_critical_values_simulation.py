@@ -4,6 +4,7 @@ MacKinnon (2010).  Makes use of parallel_fun in statsmodels which works best whe
 joblib is installed.
 """
 from __future__ import division, print_function
+from statsmodels.compat import range
 import datetime
 
 from numpy import ones, vstack, arange, diff, cumsum, sqrt, sum
@@ -30,7 +31,7 @@ def wrapper(n, trend, b, seed=0):
     res = np.zeros(b)
     finished = 0
     block_size = int(2 ** 20.0 * MAX_MEMORY_SIZE / (8.0 * n))
-    for j in xrange(0, b, block_size):
+    for j in range(0, b, block_size):
         if block_size < remaining:
             count = block_size
         else:
@@ -102,7 +103,7 @@ if __name__ == '__main__':
     for tr in trends:
         results = np.zeros((len(percentiles), len(T), EX_NUM))
 
-        for i in xrange(EX_NUM):
+        for i in range(EX_NUM):
             print("Experiment Number {0} of {1} (trend {2})".format(i + 1,
                                                                     EX_NUM, tr))
             now = datetime.datetime.now()
