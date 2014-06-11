@@ -167,55 +167,6 @@ z_ctt_largep = array([ [3.4671,4.3476,1.9231,0.5381,0.6216],
                        [4.8479,2.6447,0.5647,0.0827,0.0518]])
 z_ctt_largep *= z_large_scaling
 
-#TODO: finish this and then integrate them into adf function
-def mackinnonp(teststat, regression="c", N=1, lags=None):
-    """
-    Returns MacKinnon's approximate p-value for teststat.
-
-    Parameters
-    ----------
-    teststat : float
-        "T-value" from an Augmented Dickey-Fuller regression.
-    regression : str {"c", "nc", "ct", "ctt"}
-        This is the method of regression that was used.  Following MacKinnon's
-        notation, this can be "c" for constant, "nc" for no constant, "ct" for
-        constant and trend, and "ctt" for constant, trend, and trend-squared.
-    N : int
-        The number of series believed to be I(1).  For (Augmented) Dickey-
-        Fuller N = 1.
-
-    Returns
-    -------
-    p-value : float
-        The p-value for the ADF statistic estimated using MacKinnon 1994.
-
-    References
-    ----------
-    MacKinnon, J.G. 1994  "Approximate Asymptotic Distribution Functions for
-        Unit-Root and Cointegration Tests." Journal of Business & Economics
-        Statistics, 12.2, 167-76.
-
-    Notes
-    -----
-    For (A)DF
-    H_0: AR coefficient = 1
-    H_a: AR coefficient < 1
-    """
-    maxstat = eval("tau_max_"+regression)
-    minstat = eval("tau_min_"+regression)
-    starstat = eval("tau_star_"+regression)
-    if teststat > maxstat[N-1]:
-        return 1.0
-    elif teststat < minstat[N-1]:
-        return 0.0
-    if teststat <= starstat[N-1]:
-        tau_coef = eval("tau_" + regression + "_smallp["+str(N-1)+"]")
-#        teststat = np.log(np.abs(teststat))
-#above is only for z stats
-    else:
-        tau_coef = eval("tau_" + regression + "_largep["+str(N-1)+"]")
-    return norm.cdf(polyval(tau_coef[::-1], teststat))
-
 # These are the new estimates from MacKinnon 2010
 # the first axis is N -1
 # the second axis is 1 %, 5 %, 10 %
@@ -340,48 +291,6 @@ tau_ctt_2010 = [[ [-4.37113,-11.5882,-35.819,-334.047], # N = 1
                   [-6.22941,-36.9673,-10.868,418.414]]]
 tau_ctt_2010 = asarray(tau_ctt_2010)
 
-def mackinnoncrit(N=1, regression ="c", nobs=inf):
-    """
-    Returns the critical values for cointegrating and the ADF test.
-
-    In 2010 MacKinnon updated the values of his 1994 paper with critical values
-    for the augmented Dickey-Fuller tests.  These new values are to be
-    preferred and are used here.
-
-    Parameters
-    ----------
-    N : int
-        The number of series of I(1) series for which the null of
-        non-cointegration is being tested.  For N > 12, the critical values
-        are linearly interpolated (not yet implemented).  For the ADF test,
-        N = 1.
-    reg : str {'c', 'tc', 'ctt', 'nc'}
-        Following MacKinnon (1996), these stand for the type of regression run.
-        'c' for constant and no trend, 'tc' for constant with a linear trend,
-        'ctt' for constant with a linear and quadratic trend, and 'nc' for
-        no constant.  The values for the no constant case are taken from the
-        1996 paper, as they were not updated for 2010 due to the unrealistic
-        assumptions that would underlie such a case.
-    nobs : int or np.inf
-        This is the sample size.  If the sample size is numpy.inf, then the
-        asymptotic critical values are returned.
-
-    References
-    ----------
-    MacKinnon, J.G. 1994  "Approximate Asymptotic Distribution Functions for
-        Unit-Root and Cointegration Tests." Journal of Business & Economics
-        Statistics, 12.2, 167-76.
-    MacKinnon, J.G. 2010.  "Critical Values for Cointegration Tests."
-        Queen's University, Dept of Economics Working Papers 1227.
-        http://ideas.repec.org/p/qed/wpaper/1227.html
-    """
-    reg = regression
-    if reg not in ['c','ct','nc','ctt']:
-        raise ValueError("regression keyword %s not understood") % reg
-    if nobs is inf:
-        return eval("tau_"+reg+"_2010["+str(N-1)+",:,0]")
-    else:
-        return polyval(eval("tau_"+reg+"_2010["+str(N-1)+",:,::-1].T"),1./nobs)
 
 if __name__=="__main__":
     pass
