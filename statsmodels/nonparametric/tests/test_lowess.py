@@ -12,7 +12,7 @@ available in R's MASS package.
 import os
 import numpy as np
 from numpy.testing import (assert_almost_equal, assert_, assert_raises,
-                           assert_equal)
+                           assert_equal, assert_allclose)
 #import statsmodels.api as sm
 from statsmodels.nonparametric.smoothers_lowess import lowess
 
@@ -156,6 +156,11 @@ class  TestLowess(object):
         assert_almost_equal(yhat, actual_lowess2[:,1], decimal=13)
 
 
+    def test_perfect_prediction(self):
+        _, fitted = lowess(np.arange(20), np.arange(20)**2, frac=.2, it=3)
+        assert_equal(np.isnan(fitted).sum(), 0)
+        _, fitted = lowess(np.arange(20), np.arange(20), frac=.2, it=3)
+        assert_allclose(fitted, np.arange(20))
 
 
 if __name__ == "__main__":

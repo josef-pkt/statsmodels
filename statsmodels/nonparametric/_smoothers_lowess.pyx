@@ -533,13 +533,19 @@ def calculate_residual_weights(np.ndarray[DTYPE_t, ndim = 1] y,
         next iteration of regressions.
     '''
 
+    cdef:
+        double med
+
     std_resid = np.abs(y - y_fit)
-    std_resid /= 6.0 * np.median(std_resid)
+    med = np.median(std_resid)
+    std_resid /= 6.0 * med
 
     # Some trimming of outlier residuals.
     std_resid[std_resid >= 1.0] = 1.0
     #std_resid[std_resid >= 0.999] = 1.0
     #std_resid[std_resid <= 0.001] = 0.0
+    if med == 0:
+        std_resid[np.isnan(std_resid)] = 0.0
 
     resid_weights = bisquare(std_resid)
 
