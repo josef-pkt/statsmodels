@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from statsmodels.regression.lme import MixedLM
 from numpy.testing import assert_almost_equal
+from numpy.testing.decorators import slow
 from . import lme_r_results
 from scipy.misc import derivative
 from statsmodels.base import _penalties as penalties
@@ -69,6 +70,7 @@ class TestMixedLM(object):
 
     # Test analytic scores using numeric differentiation
     # TODO: should also do this with the hessian
+    @slow
     def test_score(self):
 
         n = 200
