@@ -166,6 +166,7 @@ def test_durbin_watson_pandas():
 class TestStattools(TestCase):
     @classmethod
     def setup_class(cls):
+        np.random.seed(5)
         x = np.random.standard_normal(1000)
         e1, e2, e3, e4, e5, e6, e7 = np.percentile(x, (12.5, 25.0, 37.5, 50.0, 62.5, 75.0, 87.5))
         c05, c50, c95 = np.percentile(x, (5.0, 50.0, 95.0))
