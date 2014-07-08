@@ -1341,9 +1341,11 @@ class LikelihoodModelResults(Results):
 
         Notes
         -----
-        The confidence interval is based on the standard normal distribution.
-        Models wish to use a different distribution should overwrite this
-        method.
+        The confidence interval is based on either the standard normal
+        distribution if `model.use_t` is False, otherwise it is based on the
+        t distribution. The default distribution, `use_t` True or False, is
+        specified in the model instances.
+
         """
         bse = self.bse
         dist = stats.norm
