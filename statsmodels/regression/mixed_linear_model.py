@@ -115,7 +115,7 @@ from statsmodels.base._penalties import Penalty
 # Sherman-Morrison-Woodbury update which is more efficient for
 # factor-structured matrices.  Should be False except when testing.
 _no_smw = False
-
+from scipy import linalg
 def _smw_solve(s, A, B, BI, rhs):
     """
     Solves the system (s*I + A*B*A') * x = rhs for x and returns x.
@@ -153,6 +153,8 @@ def _smw_solve(s, A, B, BI, rhs):
     qmat = BI + np.dot(A.T, A) / s
     u = np.dot(A.T, rhs)
     qmat = np.linalg.solve(qmat, u)
+
+    #qmat = linalg.solve(np.atleast_2d(qmat), u, sym_pos=True, check_finite=False)
     qmat = np.dot(A, qmat)
     rslt = rhs / s - qmat / s**2
     return rslt
@@ -569,9 +571,12 @@ class MixedLM(base.LikelihoodModel):
         calculated with respect to cov_re
         """
 
-        from statsmodels.tools.numdiff import approx_hess_cs
-        hmat = approx_hess_cs(params, self.loglike)
-        return hmat.real
+        if self.use_sqrt:
+            from statsmodels.tools.numdiff import approx_hess_cs
+            hmat = approx_hess_cs(params, self.loglike).real
+        else:
+            hmat = self.hessian_full(params)
+        return hmat
 
     def _unpack(self, params, sym=True):
         """
@@ -1307,7 +1312,10 @@ class MixedLM(base.LikelihoodModel):
         if "fe" in start_params:
             fe_params = start_params["fe"]
         else:
-            fe_params = np.zeros(self.exog.shape[1], dtype=np.float64)
+            #fe_params = np.zeros(self.exog.shape[1], dtype=np.float64)
+            # TODO: should be better, see #1947
+            from statsmodels.regression.linear_model import OLS
+            fe_params = OLS(self.endog, self.exog).fit().params
         if "cov_re_sqrt_unscaled" in start_params:
             re_params = start_params["cov_re_sqrt_unscaled"]
             if not self.use_sqrt:
@@ -1431,7 +1439,8 @@ class MixedLM(base.LikelihoodModel):
         for cycle in range(10):
 
             # Steepest descent iterations
-            params_prof, success = self._steepest_descent(neg_like,
+            if niter_sd > 0:
+                params_prof, success = self._steepest_descent(neg_like,
                                   params_prof, neg_score,
                                   max_iter=niter_sd)
             if success:
@@ -1445,9 +1454,13 @@ class MixedLM(base.LikelihoodModel):
                     if "disp" not in fit_args:
                         fit_args["disp"] = False
                     # Only bfgs seems to work for some reason.
-                    fit_args["method"] = "bfgs"
+                    #fit_args["method"] = getattr(kwargs, "method", "bfgs")
+                    if not "method" in fit_args:
+                        fit_args["method"] = "bfgs"
+                    fit_args["skip_hessian"] = True
                     rslt = super(MixedLM, self).fit(start_params=params_prof, **fit_args)
                 except np.linalg.LinAlgError:
+                    print 'LinalgError in bfgs'
                     continue
 
                 # The optimization succeeded
