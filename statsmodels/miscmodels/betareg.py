@@ -179,8 +179,6 @@ if __name__ == "__main__":
     fex = pd.read_csv('tests/foodexpenditure.csv')
     m = Beta.from_formula(' I(food/income) ~ income + persons', fex)
     print(m.fit().summary())
-    #print GLM.from_formula('iyield ~ C(batch) + temp', dat, family=Binomial()).fit().summary()
-
     dev = pd.read_csv('tests/methylation-test.csv')
     Z = patsy.dmatrix('~ age', dev, return_type='dataframe')
     m = Beta.from_formula('methylation ~ gender + CpG', dev,
