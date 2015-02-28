@@ -604,17 +604,23 @@ class Autoregressive(CovStruct):
                 self.dep_params = 0
                 return
 
+        flag = 0
         # Right bracket point
         b_rgt, f_rgt = 0.75, fitfunc(0.75)
         while f_rgt < f_ctr:
             b_rgt = b_rgt + (1. - b_rgt) / 2
             f_rgt = fitfunc(b_rgt)
             if b_rgt > 1. - 1e-6:
-                raise ValueError(
-                    "Autoregressive: unable to find right bracket")
+                flag = 1
+                break
+                #raise ValueError(
+                #    "Autoregressive: unable to find right bracket")
 
         from scipy.optimize import brent
-        self.dep_params = brent(fitfunc, brack=[b_lft, b_ctr, b_rgt])
+        if not flag:
+            self.dep_params = brent(fitfunc, brack=[b_lft, b_ctr, b_rgt])
+        else:
+            self.dep_params = brent(fitfunc, brack=(0,1))
 
     def covariance_matrix(self, endog_expval, index):
         ngrp = len(endog_expval)
