@@ -166,7 +166,7 @@ def example1():
     #gp2.plot(y1)
 
 
-def example2(m=100, scale=0.01, stride=2):
+def example2(m=100, scale=0.01, stride=1):
     #m,k = 100,1
     upper = 6
     xs1 = np.linspace(1,upper,m)[:,np.newaxis]
@@ -176,7 +176,7 @@ def example2(m=100, scale=0.01, stride=2):
     ridgecoeff = 1e-10
     #stride = 2 #use only some points as trainig points e.g 2 means every 2nd
     gp1 = GaussProcess(xs1[::stride,:],y1[::stride,:], kernel=kernel_euclid,
-                       ridgecoeff=1e-10)
+                       ridgecoeff=10*1e-2)#e-10)
     yhatr1 = gp1.predict(xs1)
     plt.figure()
     plt.plot(y1true, y1,'bo',y1true, yhatr1,'r.')
@@ -204,6 +204,6 @@ if __name__ == '__main__':
     #example2(m=100, scale=0.5)   # oversmoothing
     #example2(m=2000, scale=0.005) # this looks good for rbf, zoom in
     #example2(m=200, scale=0.01,stride=4)
-    example1()
+    #example1()
     #plt.show()
     #plt_closeall()   # use this to close the open figure windows
