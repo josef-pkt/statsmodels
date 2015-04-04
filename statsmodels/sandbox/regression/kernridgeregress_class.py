@@ -16,7 +16,7 @@ def kernel_rbf(x,y,scale=1, **kwds):
     return np.exp(-0.5/scale*(dist))
 
 def kernel_euclid(x,y,p=2, **kwds):
-    return ssp.minkowski_distance(x[:,np.newaxis,:],y[np.newaxis,:,:],p)
+    return 1 - ssp.minkowski_distance(x[:,np.newaxis,:],y[np.newaxis,:,:],p)
 
 class GaussProcess(object):
     '''class to perform kernel ridge regression (gaussian process)
