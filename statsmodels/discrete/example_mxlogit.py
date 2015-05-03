@@ -59,7 +59,7 @@ if __name__ == "__main__":
                           name_intercept = name_intercept)
 
     # Fit model
-#    mxlogit_res = mxlogit_mod.fit(method = "bfgs", disp = 1)
+    mxlogit_res = mxlogit_mod.fit(method = "bfgs", disp = 1)
 #    print mxlogit_res.params
 #    print mxlogit_res.llf
 
