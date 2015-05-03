@@ -179,7 +179,7 @@ class MXLogit(DiscreteChoiceModel):
         ms_params = []
 
         for param in self.n_ramdon:
-            ms_params.append('mean_%s' % param)
+            #ms_params.append('mean_%s' % param)
             ms_params.append('sd_%s' % param)
 
         self.ms_params = ms_params
@@ -206,9 +206,14 @@ class MXLogit(DiscreteChoiceModel):
         dv = np.empty((len(self.haltonsequence), len(self.n_ramdon)))
 
         for ii, name in enumerate(self.n_ramdon):
-            mean = params[self.paramsidx['mean_' + name]]
+            #mean = params[self.paramsidx['mean_' + name]]
             std = params[self.paramsidx['sd_' + name]]
             hs = self.haltonsequence[:, ii]
+            mean = 0
+            std = np.exp(std)
+            #std = np.abs(std)
+            if std < 0:
+                raise RuntimeError('negative scale for random effect')
             dv[:, ii] = stats.norm.ppf(hs, mean, std)
 
         self.dv = dv
@@ -258,12 +263,13 @@ class MXLogit(DiscreteChoiceModel):
                 if DEBUG:
                     print(self.values_ramdon)
                     print(self.dv[jj])
-
-                params[self.values_ramdon] = self.dv[jj]  # numpy.ndarray
+                
+                params_ = params.copy()
+                params_[self.values_ramdon] += self.dv[jj]  # numpy.ndarray
 
                 if DEBUG:
-                    print(params)
-                xb = self.xbetas(params)
+                    print(params_)
+                xb = self.xbetas(params_)
                 prob_average.append(self.cdf(xb))
 
         if DEBUG:
@@ -310,7 +316,7 @@ class MXLogit(DiscreteChoiceModel):
 
         for name in self.n_ramdon:
             std = params[self.paramsidx['sd_' + name]]
-            std = 1e-8 if std < 1e-8 else std
+            #std = 1e-8 if std < 1e-8 else std
             params[self.paramsidx['sd_' + name]] = std
 
         loglike = (self.endog_bychoices *
@@ -359,8 +365,9 @@ class MXLogit(DiscreteChoiceModel):
 
             for rand in self.values_ramdon:
                 mean = Logit_res.params[rand]  # loc
-                func_params.append(mean)
+                #func_params.append(mean)
                 sd = 0.1   # loc
+                #sd = np.log(sd)
                 func_params.append(sd)
 
             start_params = np.r_[Logit_res.params, func_params]
