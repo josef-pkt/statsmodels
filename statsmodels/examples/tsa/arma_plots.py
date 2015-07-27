@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import statsmodels.tsa.arima_process as tsp
 from statsmodels.sandbox.tsa.fftarma import ArmaFft as FftArmaProcess
 import statsmodels.tsa.stattools as tss
-from statsmodels.graphics.tsaplots import plotacf
+from statsmodels.graphics.tsaplots import plot_acf
 
 np.set_printoptions(precision=2)
 
@@ -36,7 +36,7 @@ for arcoef in arcoefs[:-1]:
         acf = armaprocess.acf(20)[:20]
         pacf = armaprocess.pacf(20)[:20]
         ax = fig.add_subplot(nrows, 2, subplotcount)
-        plotacf(acf, ax=ax)
+        plot_acf(acf, ax=ax)
 ##        ax.set_title('Autocorrelation \nar=%s, ma=%rs' % (ar, ma),
 ##                     size='xx-small')
         ax.text(0.7, 0.6, 'ar =%s \nma=%s' % (ar, ma),
@@ -46,7 +46,7 @@ for arcoef in arcoefs[:-1]:
         ax.set_xlim(-1,20)
         subplotcount +=1
         ax = fig.add_subplot(nrows, 2, subplotcount)
-        plotacf(pacf, ax=ax)
+        plot_acf(pacf, ax=ax)
 ##        ax.set_title('Partial Autocorrelation \nar=%s, ma=%rs' % (ar, ma),
 ##                     size='xx-small')
         ax.text(0.7, 0.6, 'ar =%s \nma=%s' % (ar, ma),
