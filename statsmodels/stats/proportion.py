@@ -243,15 +243,37 @@ def proportion_confint_baker(count, n, alpha=0.05, check=False):
 
     # find the zero of the delta function, using exact as bounds
     upp_delta = np.nan
-    if count < n:
+    if count < n and check:
         func_d = lambda p_: _delta_blaker(count, n, p_, q2d=q2d)[-1]
         upp_delta = optimize.brentq(func_d, upp_exact2 - eps, upp_exact + eps)
 
+    # find zero of delta function for lower bound by reversing
+    low_delta = np.nan
+    if count > 0:
+        upp_exact2_ = 1 - low_exact2
+        q2d, d1, d2 = _delta_blaker(n - count, n, 1 - low_exact, q2d=None)
+        print(q2d, d1, d2)
+        done = False
+        func_d = lambda p_: _delta_blaker(n - count, n, p_, q2d=q2d)[-1]
+        if func_d(upp_exact2_) < 0:
+            func_d = lambda p_: _delta_blaker(n - count, n, p_, q2d=q2d)[-2]
+            if func_d(upp_exact2_) < 0:
+                low_delta = low_exact2
+                done = True
+
+        if not done:
+            try:
+                low_delta = 1 - optimize.brentq(func_d, 1 - low_exact2 - eps,
+                                         1 - low_exact + eps)
+            except ValueError as e:
+                print('delta root not found\n')
+                print(e)
 
     res = Holder(confint = (low, upp),
                  confint_exact_centered = (low_exact, upp_exact),
                  confint_exact_centered2 = (low_exact2, upp_exact2),
-                 delta=delta, upp_delta=upp_delta, uppd=uppd)
+                 delta=delta, upp_delta=upp_delta,
+                 confint_delta=(low_delta, upp_delta), uppd=uppd)
 
     return low, upp, res
 

@@ -35,7 +35,8 @@ xfair = np.repeat([1,0], [228, 762-228])
 # comparing to SAS last output at
 # http://support.sas.com/documentation/cdl/en/procstat/63104/HTML/default/viewer.htm#procstat_freq_sect028.htm
 # confidence interval for tost
-ci01 = smw.confint_ztest(xfair, alpha=0.1)
+#ci01 = smw.confint_ztest(xfair, alpha=0.1)
+ci01 = smw._zconfint_generic(xfair, alpha=0.1)
 assert_almost_equal(ci01,  [0.2719, 0.3265], 4)
 res = smw.ztost(xfair, 0.18, 0.38)
 
