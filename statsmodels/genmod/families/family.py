@@ -91,7 +91,9 @@ class Family(object):
 
         Notes
         -----
-        mu_0 = (endog + mean(endog))/2.
+        .. math::
+
+           \mu_0 = (Y + \overline{Y})/2
 
         Notes
         -----
@@ -115,7 +117,9 @@ class Family(object):
 
         Notes
         -----
-        `w` = 1 / (link'(`mu`)**2 * variance(`mu`))
+        .. math::
+
+           w = 1 / (g'(\mu)^2  \cdot \mathrm{Var}(\mu))
         """
         return 1. / (self.link.deriv(mu)**2 * self.variance(mu))
 
@@ -131,8 +135,10 @@ class Family(object):
             The endogenous response variable
         mu : array-like
             The inverse of the link function at the linear predicted values.
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional scale argument
+            An optional scale argument. The default is 1.
 
         Returns
         -------
@@ -145,7 +151,8 @@ class Family(object):
 
         .. math::
 
-           \sum_i(2 loglike(y_i, y_i) - 2 * loglike(y_i, mu_i)) / scale
+           D = \sum_i(2 \cdot \mathrm{llf}(Y_i, Y_i) - 2 \cdot \mathrm{llf}
+           (Y_i, \mu_i)) \cdot \mathrm{freq\_weights}_i / \phi
 
         where y is the endogenous variable. The deviance functions are
         analytically defined for each family.
@@ -162,8 +169,11 @@ class Family(object):
             The endogenous response variable
         mu : array
             The inverse of the link function at the linear predicted values.
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional argument to divide the residuals by scale
+            An optional argument to divide the residuals by scale. The default
+            is 1.
 
         Returns
         -------
@@ -221,13 +231,16 @@ class Family(object):
             Usually the endogenous response variable.
         `mu` : array
             Usually but not always the fitted mean response variable.
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float
-            The scale parameter
+            The scale parameter. The default is 1.
 
         Returns
         -------
         llf : float
-            The value of the loglikelihood evaluated at (endog,mu).
+            The value of the loglikelihood evaluated at
+            (endog,mu,freq_weights,scale) as defined below.
         Notes
         -----
         This is defined for each family.  endog and mu are not restricted to
@@ -306,8 +319,11 @@ class Poisson(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional argument to divide the residuals by scale
+            An optional argument to divide the residuals by scale. The default
+            is 1.
 
         Returns
         -------
@@ -316,7 +332,11 @@ class Poisson(Family):
 
         Notes
         -----
-        resid_dev = sign(endog-mu)*sqrt(2*endog*log(endog/mu)-2*(endog-mu))
+        .. math::
+
+           \mathrm{resid\_dev_i} = \mathrm{sign}(Y_i - \mu_i) \cdot
+           \sqrt{2 \cdot \mathrm{freq\_weights_i} \cdot (Y_i \cdot \log{(Y_i
+           / \mu_i)} - (Y_i - \mu_i))} / \phi
         """
         endog_mu = self._clean(endog / mu)
         return (np.sign(endog - mu) *
@@ -333,8 +353,10 @@ class Poisson(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional scale argument
+            An optional scale argument. The default is 1.
 
         Returns
         -------
@@ -345,7 +367,10 @@ class Poisson(Family):
         -----
         If a constant term is included it is defined as
 
-        :math:`deviance = 2*\\sum_{i}(Y*\\log(Y/\\mu))`
+        .. math::
+
+           D = 2 \cdot \sum_{i}(Y_i \cdot \mathrm{freq\_weights}_i
+           \cdot \log{(Y_i / \mu_i)})/ \phi
         '''
         endog_mu = self._clean(endog / mu)
         return 2 * np.sum(endog * freq_weights * np.log(endog_mu)) / scale
@@ -360,6 +385,8 @@ class Poisson(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
             The scale parameter, defaults to 1.
 
@@ -367,12 +394,14 @@ class Poisson(Family):
         -------
         llf : float
             The value of the loglikelihood function evaluated at
-            (endog,mu,scale) as defined below.
+            (endog,mu,freq_weights,scale) as defined below.
 
         Notes
         -----
-        llf = scale * sum(-mu + endog*log(mu) - gammaln(endog+1))
-        where gammaln is the log gamma function
+        .. math::
+
+           \mathrm{llf} = \phi \cdot \sum_{i} \mathrm{freq\_weights}_i \cdot
+           (Y_i \cdot \log(\mu_i) - \mu_i - \ln{\Gamma(Y_i + 1)})
         """
         loglike = np.sum(freq_weights * (endog * np.log(mu) - mu -
                          special.gammaln(endog + 1)))
@@ -396,11 +425,10 @@ class Poisson(Family):
 
         Notes
         -----
-        resid_anscombe is defined
+        .. math::
 
-        .. math:
-
-           (3/2.)*(endog^{2/3.} - \\mu**(2/3.))/\\mu^{1/6.}
+           \mathrm{resid\_anscombe}_i = (3/2) \cdot (Y_i^{2/3} -
+           \mu_i^{2/3}) / \mu_i^{1/6}
         """
         return (3 / 2.) * (endog**(2/3.) - mu**(2 / 3.)) / mu**(1 / 6.)
 
@@ -448,8 +476,11 @@ class Gaussian(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional argument to divide the residuals by scale
+            An optional argument to divide the residuals by scale. The default
+            is 1.
 
         Returns
         -------
@@ -458,10 +489,13 @@ class Gaussian(Family):
 
         Notes
         --------
-        `resid_dev` = (`endog` - `mu`)/sqrt(variance(`mu`))
+        .. math::
+
+           \mathrm{resid\_dev}_i = \mathrm{freq\_weights}_i \cdot
+           (Y_i - \mu_i) / \sqrt{\mathrm{Var}(\mu_i)} / \phi
         """
 
-        return (np.sqrt(freq_weights) * (endog - mu) / 
+        return (np.sqrt(freq_weights) * (endog - mu) /
                 np.sqrt(self.variance(mu)) / scale)
 
     def deviance(self, endog, mu, freq_weights=1., scale=1.):
@@ -474,17 +508,22 @@ class Gaussian(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional scale argument
+            An optional scale argument. The default is 1.
 
         Returns
         -------
         deviance : float
-            The deviance function at (endog,mu) as defined below.
+            The deviance function at (endog,mu,freq_weights,scale)
+            as defined below.
 
         Notes
         --------
-        `deviance` = sum((endog-mu)**2)
+        .. math::
+
+           D = \sum_i \mathrm{freq\_weights}_i \cdot (Y_i - \mu_i)^2 / \phi
         """
         return np.sum((freq_weights * (endog - mu)**2)) / scale
 
@@ -498,6 +537,8 @@ class Gaussian(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
             Scales the loglikelihood function. The default is 1.
 
@@ -505,19 +546,31 @@ class Gaussian(Family):
         -------
         llf : float
             The value of the loglikelihood function evaluated at
-            (endog,mu,scale) as defined below.
+            (endog,mu,freq_weights,scale) as defined below.
 
         Notes
         -----
         If the link is the identity link function then the
         loglikelihood function is the same as the classical OLS model.
-        llf = -(nobs/2)*(log(SSR) + (1 + log(2*pi/nobs)))
-        where SSR = sum((endog-link^(-1)(mu))**2)
+
+        .. math::
+        
+           \mathrm{llf} = -\mathrm{nobs} / 2 \cdot (\log(\mathrm{SSR}) +
+           (1 + \log(2 \pi / \mathrm{nobs})))
+
+        where
+
+        .. math::
+           \mathrm{SSR} = \sum_i (Y_i - g^{-1}(\mu_i))^2
 
         If the links is not the identity link then the loglikelihood
         function is defined as
-        llf = sum((`endog`*`mu`-`mu`**2/2)/`scale` - `endog`**2/(2*`scale`) - \
-            (1/2.)*log(2*pi*`scale`))
+
+        .. math::
+
+           \mathrm{llf} = \sum_i \mathrm{freq\_weights}_i \cdot
+           ((Y_i \cdot \mu_i - \mu_i^2 / 2) / \phi
+           - Y^2 / 2 \phi - (1/2) \cdot \log(2 \pi \phi))
         """
         if isinstance(self.link, L.Power) and self.link.power == 1:
             # This is just the loglikelihood for classical OLS
@@ -548,7 +601,9 @@ class Gaussian(Family):
 
         Notes
         --------
-        `resid_anscombe` = `endog` - `mu`
+        .. math::
+
+           \mathrm{resid\_anscombe}_i = Y_i - \mu_i
         """
         return endog - mu
 
@@ -608,8 +663,10 @@ class Gamma(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional scale argument
+            An optional scale argument. The default is 1.
 
         Returns
         -------
@@ -618,7 +675,10 @@ class Gamma(Family):
 
         Notes
         -----
-        `deviance` = 2*sum((endog - mu)/mu - log(endog/mu))
+        .. math::
+
+           D = 2 \cdot \sum_i \mathrm{freq\_weights}_i \cdot
+           ((Y_i - \mu_i)/\mu_i - \log(Y_i / \mu_i))
         """
         endog_mu = self._clean(endog/mu)
         return 2*np.sum(freq_weights*((endog-mu)/mu-np.log(endog_mu)))
@@ -633,8 +693,11 @@ class Gamma(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional argument to divide the residuals by scale
+            An optional argument to divide the residuals by scale. The default
+            is 1.
 
         Returns
         -------
@@ -643,11 +706,11 @@ class Gamma(Family):
 
         Notes
         -----
-        `resid_dev` is defined
+        .. math::
 
-        .. math:
-
-           sign(endog - \mu) * \sqrt{-2*(-(endog-\mu)/\mu + \log(endog/\mu))}
+           \mathrm{resid\_dev}_i = \mathrm{sign}(Y_i - \mu_i) \sqrt{-2
+           \cdot \mathrm{freq\_weights}_i \cdot (-(Y_i - \mu_i) / \mu_i +
+           \log(Y_i / \mu_i))}
         """
         endog_mu = self._clean(endog / mu)
         return np.sign(endog - mu) * np.sqrt(-2 * freq_weights *
@@ -664,6 +727,8 @@ class Gamma(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
             The default is 1.
 
@@ -671,13 +736,15 @@ class Gamma(Family):
         -------
         llf : float
             The value of the loglikelihood function evaluated at
-            (endog,mu,scale) as defined below.
+            (endog,mu,freq_weights,scale) as defined below.
 
         Notes
         --------
-        llf = -1/scale * sum(endog/mu + log(mu) + (scale-1)*log(endog) +\
-              log(scale) + scale*gammaln(1/scale))
-        where gammaln is the log gamma function.
+        .. math::
+
+           \mathrm{llf} = -1 / \phi \cdot \sum_i \mathrm{freq\_weights}_i
+           \cdot (Y_i / \mu_i + \log(\mu_i) + (\phi -1) \log(Y) + \log(\phi) +
+           \phi \ln \Gamma(1 / \phi))
         """
         return - 1./scale * np.sum((endog/mu + np.log(mu) + (scale - 1) *
                                     np.log(endog) + np.log(scale) + scale *
@@ -705,7 +772,10 @@ class Gamma(Family):
 
         Notes
         -----
-        resid_anscombe = 3*(endog**(1/3.)-mu**(1/3.))/mu**(1/3.)
+        .. math::
+
+           \mathrm{resid\_anscombe}_i = 3 \cdot (Y_i^{1/3} - \mu_i^{1/3})/
+           \mu_i^{1/3}
         """
         return 3 * (endog**(1/3.) - mu**(1/3.)) / mu**(1/3.)
 
@@ -757,9 +827,7 @@ class Binomial(Family):
     def starting_mu(self, y):
         """
         The starting values for the IRLS algorithm for the Binomial family.
-        A good choice for the binomial family is
-
-        starting_mu = (y + .5)/2
+        A good choice for the binomial family is :math:`\mu_0 = (Y_i + 0.5)/2`
         """
         return (y + .5)/2
 
@@ -802,8 +870,10 @@ class Binomial(Family):
             if appropriate).
         mu : array
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional scale argument
+            An optional scale argument. The default is 1.
 
         Returns
         --------
@@ -814,15 +884,23 @@ class Binomial(Family):
         -----
         If the endogenous variable is binary:
 
-        `deviance` = -2*sum(I_one * log(mu) + (I_zero)*log(1-mu))
-        where I_one is an indicator function that evalueates to 1 if
-        endog_i == 1. and I_zero is an indicator function that evaluates to
-        1 if endog_i == 0.
+        .. math::
+
+           D = -2 \sum_i \mathbf{1}_{i} \cdot \log(\mu_i) + \mathbf{0}_{i}
+           \cdot \log(1 - \mu_i)
+
+        where :math:`\mathbf{1}_i` is an indicator function that evalueates to
+        1 if :math:`Y_i = 1`. and :math:`\mathbf{0}_i` is an indicator function
+        that evaluates to 1 if :math:`Y_i = 0`.
 
         If the model is ninomial:
 
-        `deviance` = 2*sum(log(endog/mu) + (n-endog)*log((n-endog)/(n-mu)))
-        where endog and n are as defined in Binomial.initialize.
+        .. math::
+
+           D = 2 \sum_i \log(Y_i / \mu_i) + (n_i - Y_i) \cdot \log((n_i - Y_i)
+           / n_i - \mu_i)
+
+        where :math:`Y_i` and :math:`n` are as defined in Binomial.initialize.
         '''
         if np.shape(self.n) == () and self.n == 1:
             one = np.equal(endog, 1)
@@ -845,8 +923,11 @@ class Binomial(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional argument to divide the residuals by scale
+            An optional argument to divide the residuals by scale. The default
+            is 1.
 
         Returns
         -------
@@ -855,19 +936,27 @@ class Binomial(Family):
 
         Notes
         -----
-        If `endog` is binary:
+        If the endogenous variable is binary:
 
-        resid_dev = sign(endog-mu)*sqrt(-2*log(I_one*mu + I_zero*(1-mu)))
+        .. math::
 
-        where I_one is an indicator function that evaluates as 1 if endog == 1
-        and I_zero is an indicator function that evaluates as 1 if endog == 0.
+           \mathrm{resid\_dev}_i = \mathrm{sign}(Y_i - \mu_i) \cdot \sqrt{
+           -2 \cdot \mathrm{freq\_weights}_i \cdot \log(\mathbf{1_i} \cdot
+           \mu_i + \mathbf{0_i} \cdot (1 - \mu_i))}
 
-        If `endog` is binomial:
+        where :math:`\mathbf{1}_i` is an indicator function that evalueates to
+        1 if :math:`Y_i = 1`. and :math:`\mathbf{0}_i` is an indicator function
+        that evaluates to 1 if :math:`Y_i = 0`.
 
-        resid_dev = sign(endog - mu) * sqrt(2 * n * (endog * log(endog/mu) +
-                    (1 - endog) * log((1 - endog)/(1 - mu))))
+        If the endogenous variable is binomial:
 
-        where endog and n are as defined in Binomial.initialize.
+        .. math::
+
+           \mathrm{resid\_dev}_i = \mathrm{sign}(Y_i - \mu_i) \sqrt{
+           2 n_i \cdot (Y_i \cdot \log(Y_i / \mu_i) + (1 - Y_i) \cdot \log(
+           1 - Y_i)/(1 - \mu_i))}
+
+        where :math:`Y_i` and :math:`n` are as defined in Binomial.initialize.
         """
 
         mu = self.link._clean(mu)
@@ -883,7 +972,7 @@ class Binomial(Family):
                              (1 - endog) * np.log((1 - endog)/(1 - mu) +
                                                   1e-200)))/scale)
 
-    def loglike(self, endog, mu, freq_weights, scale=1.):
+    def loglike(self, endog, mu, freq_weights=1, scale=1.):
         """
         The log-likelihood function in terms of the fitted mean response.
 
@@ -893,6 +982,8 @@ class Binomial(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
             Not used for the Binomial GLM.
 
@@ -900,19 +991,27 @@ class Binomial(Family):
         -------
         llf : float
             The value of the loglikelihood function evaluated at
-            (endog,mu,scale) as defined below.
+            (endog,mu,freq_weights,scale) as defined below.
 
         Notes
         --------
-        If `endog` is binary:
-        `llf` = scale*sum(endog*log(mu/(1-mu))+log(1-mu))
+        If the endogenous variable is binary:
 
-        If `endog` is binomial:
-        `llf` = scale*sum(gammaln(n+1) - gammaln(y+1) - gammaln(n-y+1) +\
-                y*log(mu/(1-mu)) + n*log(1-mu)
+        .. math::
 
-        where gammaln is the log gamma function and y = endog*n with endog
-        and n as defined in Binomial initialize.  This simply makes y the
+         \mathrm{llf} = \phi \sum_i (y_i \cdot \log(\mu_i/(1-\mu_i)) + \log(
+         1-\mu_i)) \cdot \mathrm{freq\_weights}_i
+
+        If the endogenous variable is binomial:
+
+        .. math::
+
+           \mathrm{llf} = \phi \sum_i (\ln \Gamma(n+1) - \ln \Gamma(y_i + 1) -
+           \ln \Gamma(n_i - y_i +1) + y_i \cdot \log(\mu_i / (1 - \mu_i)) +
+           n \cdot \log(1 - \mu_i)) \cdot \mathrm{freq\_weights}_i
+
+        where :math:`y_i = Y_i \cdot n_i` with :math:`Y_i` and :math:`n_i` as
+        defined in Binomial initialize.  This simply makes :math:`y_i` the
         original number of successes.
         """
 
@@ -1023,8 +1122,11 @@ class InverseGaussian(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional argument to divide the residuals by scale
+            An optional argument to divide the residuals by scale. The default
+            is 1.
 
         Returns
         -------
@@ -1033,7 +1135,11 @@ class InverseGaussian(Family):
 
         Notes
         -----
-        `dev_resid` = sign(endog-mu)*sqrt((endog-mu)**2/(endog*mu**2))
+        .. math::
+
+           \mathrm{resid\_dev}_i = \mathrm{sign}(Y_i - \mu_i) \sqrt {
+           \mathrm{freq\_weights}_i \cdot (Y_i - \mu_i)^2 / (Y_i \cdot
+           \mu_i^2)} / \phi
         """
         return np.sign(endog-mu) * np.sqrt(freq_weights *
                                            (endog-mu)**2/(endog*mu**2))/scale
@@ -1048,8 +1154,10 @@ class InverseGaussian(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional scale argument
+            An optional scale argument. The default is 1.
 
         Returns
         -------
@@ -1058,7 +1166,10 @@ class InverseGaussian(Family):
 
         Notes
         -----
-        `deviance` = sum((endog=mu)**2/(endog*mu**2))
+        .. math::
+
+           D = \sum_i \mathrm{freq\_weights}_i \cdot ((Y_i - \mu_i)^2 /
+           (Y_i \cdot \mu_i^2)) / \phi
         """
         return np.sum(freq_weights*(endog-mu)**2/(endog*mu**2))/scale
 
@@ -1072,6 +1183,8 @@ class InverseGaussian(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
             The default is 1.
 
@@ -1079,12 +1192,15 @@ class InverseGaussian(Family):
         -------
         llf : float
             The value of the loglikelihood function evaluated at
-            (endog,mu,scale) as defined below.
+            (endog,mu,freq_weights,scale) as defined below.
 
         Notes
         -----
-        `llf` = -(1/2.)*sum((endog-mu)**2/(endog*mu**2*scale)
-                 + log(scale*endog**3) + log(2*pi))
+        .. math::
+
+           \mathrm{llf} = -1/2 \cdot \sum_i \mathrm{freq\_weights}_i \cdot
+           ((Y_i - \mu_i)^2 / (Y_i \cdot \mu_i \cdot \phi) +
+           \log(\phi \cdot Y_i^3) + \log(2 \pi))
         """
         return -.5 * np.sum(((endog - mu)**2/(endog * mu**2 * scale) +
                              np.log(scale * endog**3) + np.log(2 * np.pi)) *
@@ -1109,7 +1225,9 @@ class InverseGaussian(Family):
 
         Notes
         -----
-        `resid_anscombe` =  log(endog/mu)/sqrt(mu)
+        .. math::
+
+           \mathrm{resid\_anscombe}_i = \log(Y_i / \mu_i) / \sqrt(\mu_i)
         """
         return np.log(endog / mu) / np.sqrt(mu)
 
@@ -1174,7 +1292,6 @@ class NegativeBinomial(Family):
         return np.clip(x, FLOAT_EPS, np.inf)
 
     def deviance(self, endog, mu, freq_weights=1., scale=1.):
-        # TODO: Data weights are incomplete
         r"""
         Returns the value of the deviance function.
 
@@ -1184,8 +1301,10 @@ class NegativeBinomial(Family):
             Endogenous response variable
         mu : array-like
             Fitted mean response variable
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional scale argument
+            An optional scale argument. The default is 1.
 
         Returns
         -------
@@ -1194,21 +1313,18 @@ class NegativeBinomial(Family):
 
         Notes
         -----
-        `deviance` = sum(piecewise)
+        :math:`D = \sum_i \mathrm{piecewise}_i` where
+        :math:`\mathrm{piecewise}` is defined as:
 
-        where piecewise is defined as
+        If :math:`Y_{i} = 0`:
 
-        If :math:`Y_{i} == 0`:
-
-        .. math::
-
-           piecewise_i = 2\log(1+\alpha*\mu)/\alpha
+        :math:`\mathrm{piecewise}_i = 2\log(1+\alpha \cdot \mu_i)/\alpha`
 
         If :math:`Y_{i} > 0`:
 
-        .. math::
-
-           piecewise_i = math2 Y \log(Y/\mu)-2/\alpha(1+\alpha Y) * \log((1+\alpha Y)/(1+\alpha\mu))
+        :math:`\mathrm{piecewise}_i = 2 Y_i \cdot \log(Y_i / \mu_i) - (2 /
+        \alpha) \cdot (1 + \alpha \cdot Y_i) \cdot \ln(1 + \alpha \cdot Y_i) /
+        (1 + \alpha \cdot \mu_i)`
         """
         iszero = np.equal(endog, 0)
         notzero = 1 - iszero
@@ -1230,8 +1346,11 @@ class NegativeBinomial(Family):
             `endog` is the response variable
         mu : array-like
             `mu` is the fitted value of the model
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float, optional
-            An optional argument to divide the residuals by scale
+            An optional argument to divide the residuals by scale. The default
+            is 1.
 
         Returns
         --------
@@ -1240,21 +1359,21 @@ class NegativeBinomial(Family):
 
         Notes
         -----
-        `resid_dev` = sign(endog-mu) * sqrt(piecewise)
+        :math:`\mathrm{resid\_dev}_i = \mathrm{sign}(Y_i-\mu_i) \cdot
+        \sqrt{\mathrm{piecewise}_i}`
 
-        where piecewise is defined as
+        where :math:`\mathrm{piecewise}_i` is defined as
 
         If :math:`Y_i = 0`:
 
-        .. math::
-
-           piecewise_i = 2*log(1+alpha*mu)/alpha
+        :math:`\mathrm{piecewise}_i = 2 \cdot \log(1+\alpha \cdot \mu_i)/
+        \alpha`
 
         If :math:`Y_i > 0`:
 
-        .. math::
-
-           piecewise_i = 2*Y*log(Y/\mu) - 2/\alpha * (1 + \alpha * Y) * \log((1 + \alpha * Y)/(1 + \alpha * \mu))
+        :math:`\mathrm{piecewise}_i = 2 \cdot Y_i \cdot \log(Y_i / \mu_i) - (2/
+        \alpha) \cdot (1 + \alpha \cdot Y_i) \cdot \log((1 + \alpha \cdot
+        Y_i) / (1 + \alpha \cdot \mu_i))`
         '''
         iszero = np.equal(endog, 0)
         notzero = 1 - iszero
@@ -1277,24 +1396,33 @@ class NegativeBinomial(Family):
             Endogenous response variable
         mu : array-like
             The fitted mean response values
+        freq_weights : array-like
+            1d array of frequency weights. The default is 1.
         scale : float
-            The scale parameter
+            The scale parameter. The default is 1.
 
         Returns
         -------
         llf : float
             The value of the loglikelihood function evaluated at
-            (endog,mu,scale) as defined below.
+            (endog,mu,freq_weights,scale) as defined below.
 
         Notes
         -----
-        sum(endog*log(alpha*exp(lin_pred)/(1+alpha*exp(lin_pred))) -
-                log(1+alpha*exp(lin_pred))/alpha + constant)
+        Defined as:
 
-        where constant is defined as::
+        .. math::
 
-           constant = gammaln(endog + 1/alpha) - gammaln(endog + 1) -
-                      gammaln(1/alpha)
+           \mathrm{llf} = \sum_i \mathrm{freq\_weights}_i \cdot (Y_i \cdot
+           \log{(\\alpha \cdot e^{\eta_i} / (1 + \\alpha \cdot e^{\eta_i}))} -
+           \log{(1 + \\alpha \cdot e^{\eta_i})} / \\alpha + C)
+
+        where :math:`C` is defined as:
+
+        .. math::
+
+           C = \ln \Gamma{(Y_i + 1/ \\alpha )} - \ln \Gamma(Y_i + 1) -
+                      \ln \Gamma{(1/ \\alpha )}
         """
         lin_pred = self._link(mu)
         constant = (special.gammaln(endog + 1 / self.alpha) -

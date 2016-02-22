@@ -66,6 +66,10 @@ class GLM(base.LikelihoodModel):
         family = sm.family.Binomial()
         Each family can take a link instance as an argument.  See
         statsmodels.family.family for more information.
+    freq_weights : array-like
+        1d array of frequency weights. The default is None. If None is selected
+        or a blank value, then the algorithm will replace with an array of 1's
+        with length equal to the endog.
     %(extra_params)s
 
     Attributes
@@ -80,8 +84,12 @@ class GLM(base.LikelihoodModel):
         See Parameters.
     family : family class instance
         A pointer to the distribution family of the model.
+    freq_weights : array
+        See Parameters.
     mu : array
         The estimated mean response of the transformed variable.
+    n : array
+        See Parameters.
     normalized_cov_params : array
         `p` x `p` normalized covariance of the design / exogenous data.
     pinv_wexog : array
@@ -92,6 +100,7 @@ class GLM(base.LikelihoodModel):
         The scaling used for fitting the model.  Available after fit is called.
     weights : array
         The value of the weights after the last iteration of fit.
+
 
     Examples
     --------
@@ -151,16 +160,20 @@ class GLM(base.LikelihoodModel):
         Residual degrees of freedom is equal to the number of observation n
         minus the number of regressors p.
     endog : array
-        See above.  Note that endog is a reference to the data so that if
+        See above.  Note that `endog` is a reference to the data so that if
         data is already an array and it is changed, then `endog` changes
         as well.
     exposure : array-like
         Include ln(exposure) in model with coefficient constrained to 1. Can
         only be used if the link is the logarithm function.
     exog : array
-        See above.  Note that endog is a reference to the data so that if
-        data is already an array and it is changed, then `endog` changes
+        See above.  Note that `exdog` is a reference to the data so that if
+        data is already an array and it is changed, then `exdog` changes
         as well.
+    freq_weights : array
+        See above. Note that `freq_weights` is a reference to the data so that 
+        if data i already an array and it is changed, then `freq_weights`
+        changes as well.
     iteration : int
         The number of iterations that fit has run.  Initialized at 0.
     family : family class instance
@@ -168,10 +181,16 @@ class GLM(base.LikelihoodModel):
         statsmodels.families.  Default is Gaussian.
     mu : array
         The mean response of the transformed variable.  `mu` is the value of
-        the inverse of the link function at lin_pred, where lin_pred is the linear
-        predicted value of the WLS fit of the transformed variable.  `mu` is
-        only available after fit is called.  See
+        the inverse of the link function at lin_pred, where lin_pred is the
+        linear predicted value of the WLS fit of the transformed variable. 
+        `mu` is only available after fit is called.  See
         statsmodels.families.family.fitted of the distribution family for more
+        information.
+    n : array
+        See above. Note that `n` is a reference to the data so that if
+        data is already an array and it is changed, then `n` changes
+        as well. `n` is the number of binomial trials and only available with
+        that distribution. See statsmodels.families.Binomial for more
         information.
     normalized_cov_params : array
         The p x p normalized covariance of the design / exogenous data.
@@ -1151,7 +1170,7 @@ class GLMResults(base.LikelihoodModelResults):
         if len(kwargs) > 0:
             return GLM(endog, exog, family=self.family, **kwargs).fit().mu
         else:
-            wls_model = lm.WLS(endog, exog, 
+            wls_model = lm.WLS(endog, exog,
                                weights=self._freq_weights * self._n)
             return wls_model.fit().fittedvalues
 
