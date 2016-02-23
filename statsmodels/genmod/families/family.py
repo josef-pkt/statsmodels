@@ -119,7 +119,7 @@ class Family(object):
         -----
         .. math::
 
-           w = 1 / (g'(\mu)^2  \cdot \mathrm{Var}(\mu))
+           w = 1 / (g'(\mu)^2  * Var(\mu))
         """
         return 1. / (self.link.deriv(mu)**2 * self.variance(mu))
 
@@ -151,8 +151,8 @@ class Family(object):
 
         .. math::
 
-           D = \sum_i(2 \cdot \mathrm{llf}(Y_i, Y_i) - 2 \cdot \mathrm{llf}
-           (Y_i, \mu_i)) \cdot \mathrm{freq\_weights}_i / \phi
+           D = \sum_i (2 * llf(Y_i, Y_i) - 2 * llf(Y_i, \mu_i)) *
+           freq\_weights_i / \phi
 
         where y is the endogenous variable. The deviance functions are
         analytically defined for each family.
@@ -334,9 +334,8 @@ class Poisson(Family):
         -----
         .. math::
 
-           \mathrm{resid\_dev_i} = \mathrm{sign}(Y_i - \mu_i) \cdot
-           \sqrt{2 \cdot \mathrm{freq\_weights_i} \cdot (Y_i \cdot \log{(Y_i
-           / \mu_i)} - (Y_i - \mu_i))} / \phi
+           resid\_dev_i = sign(Y_i - \mu_i) * \sqrt{2 * freq\_weights_i *
+           (Y_i * \log(Y_i / \mu_i) - (Y_i - \mu_i))} / \phi
         """
         endog_mu = self._clean(endog / mu)
         return (np.sign(endog - mu) *
@@ -369,8 +368,7 @@ class Poisson(Family):
 
         .. math::
 
-           D = 2 \cdot \sum_{i}(Y_i \cdot \mathrm{freq\_weights}_i
-           \cdot \log{(Y_i / \mu_i)})/ \phi
+           D = 2 * \sum_i (Y_i * freq\_weights_i * \log(Y_i / \mu_i))/ \phi
         '''
         endog_mu = self._clean(endog / mu)
         return 2 * np.sum(endog * freq_weights * np.log(endog_mu)) / scale
@@ -400,8 +398,8 @@ class Poisson(Family):
         -----
         .. math::
 
-           \mathrm{llf} = \phi \cdot \sum_{i} \mathrm{freq\_weights}_i \cdot
-           (Y_i \cdot \log(\mu_i) - \mu_i - \ln{\Gamma(Y_i + 1)})
+           llf = \phi * \sum_i freq\_weights_i * (Y_i * \log(\mu_i) - \mu_i -
+           \ln \Gamma(Y_i + 1))
         """
         loglike = np.sum(freq_weights * (endog * np.log(mu) - mu -
                          special.gammaln(endog + 1)))
@@ -427,8 +425,7 @@ class Poisson(Family):
         -----
         .. math::
 
-           \mathrm{resid\_anscombe}_i = (3/2) \cdot (Y_i^{2/3} -
-           \mu_i^{2/3}) / \mu_i^{1/6}
+           resid\_anscombe_i = (3/2) * (Y_i^{2/3} - \mu_i^{2/3}) / \mu_i^{1/6}
         """
         return (3 / 2.) * (endog**(2/3.) - mu**(2 / 3.)) / mu**(1 / 6.)
 
@@ -491,8 +488,8 @@ class Gaussian(Family):
         --------
         .. math::
 
-           \mathrm{resid\_dev}_i = \mathrm{freq\_weights}_i \cdot
-           (Y_i - \mu_i) / \sqrt{\mathrm{Var}(\mu_i)} / \phi
+           resid\_dev_i = freq\_weights_i * (Y_i - \mu_i) / \sqrt{Var(\mu_i)} /
+           \phi
         """
 
         return (np.sqrt(freq_weights) * (endog - mu) /
@@ -523,7 +520,7 @@ class Gaussian(Family):
         --------
         .. math::
 
-           D = \sum_i \mathrm{freq\_weights}_i \cdot (Y_i - \mu_i)^2 / \phi
+           D = \sum_i freq\_weights_i * (Y_i - \mu_i)^2 / \phi
         """
         return np.sum((freq_weights * (endog - mu)**2)) / scale
 
@@ -554,23 +551,21 @@ class Gaussian(Family):
         loglikelihood function is the same as the classical OLS model.
 
         .. math::
-        
-           \mathrm{llf} = -\mathrm{nobs} / 2 \cdot (\log(\mathrm{SSR}) +
-           (1 + \log(2 \pi / \mathrm{nobs})))
+
+           llf = -nobs / 2 * (\log(SSR) + (1 + \log(2 \pi / nobs)))
 
         where
 
         .. math::
-           \mathrm{SSR} = \sum_i (Y_i - g^{-1}(\mu_i))^2
+           SSR = \sum_i (Y_i - g^{-1}(\mu_i))^2
 
         If the links is not the identity link then the loglikelihood
         function is defined as
 
         .. math::
 
-           \mathrm{llf} = \sum_i \mathrm{freq\_weights}_i \cdot
-           ((Y_i \cdot \mu_i - \mu_i^2 / 2) / \phi
-           - Y^2 / 2 \phi - (1/2) \cdot \log(2 \pi \phi))
+           llf = \sum_i freq\_weights_i * ((Y_i * \mu_i - \mu_i^2 / 2) / \phi -
+           Y^2 / 2 * \phi - (1/2) * \log(2 * \pi * \phi))
         """
         if isinstance(self.link, L.Power) and self.link.power == 1:
             # This is just the loglikelihood for classical OLS
@@ -603,7 +598,7 @@ class Gaussian(Family):
         --------
         .. math::
 
-           \mathrm{resid\_anscombe}_i = Y_i - \mu_i
+           resid\_anscombe_i = Y_i - \mu_i
         """
         return endog - mu
 
@@ -677,8 +672,8 @@ class Gamma(Family):
         -----
         .. math::
 
-           D = 2 \cdot \sum_i \mathrm{freq\_weights}_i \cdot
-           ((Y_i - \mu_i)/\mu_i - \log(Y_i / \mu_i))
+           D = 2 * \sum_i freq\_weights_i * ((Y_i - \mu_i)/\mu_i - \log(Y_i /
+           \mu_i))
         """
         endog_mu = self._clean(endog/mu)
         return 2*np.sum(freq_weights*((endog-mu)/mu-np.log(endog_mu)))
@@ -708,9 +703,8 @@ class Gamma(Family):
         -----
         .. math::
 
-           \mathrm{resid\_dev}_i = \mathrm{sign}(Y_i - \mu_i) \sqrt{-2
-           \cdot \mathrm{freq\_weights}_i \cdot (-(Y_i - \mu_i) / \mu_i +
-           \log(Y_i / \mu_i))}
+           resid\_dev_i = sign(Y_i - \mu_i) \sqrt{-2 * freq\_weights_i *
+           (-(Y_i - \mu_i) / \mu_i + \log(Y_i / \mu_i))}
         """
         endog_mu = self._clean(endog / mu)
         return np.sign(endog - mu) * np.sqrt(-2 * freq_weights *
@@ -742,9 +736,8 @@ class Gamma(Family):
         --------
         .. math::
 
-           \mathrm{llf} = -1 / \phi \cdot \sum_i \mathrm{freq\_weights}_i
-           \cdot (Y_i / \mu_i + \log(\mu_i) + (\phi -1) \log(Y) + \log(\phi) +
-           \phi \ln \Gamma(1 / \phi))
+           llf = -1 / \phi * \sum_i freq\_weights_i * (Y_i / \mu_i+\log(\mu_i)+
+           (\phi -1) * \log(Y) + \log(\phi) + \phi * \ln \Gamma(1 /\phi))
         """
         return - 1./scale * np.sum((endog/mu + np.log(mu) + (scale - 1) *
                                     np.log(endog) + np.log(scale) + scale *
@@ -774,8 +767,7 @@ class Gamma(Family):
         -----
         .. math::
 
-           \mathrm{resid\_anscombe}_i = 3 \cdot (Y_i^{1/3} - \mu_i^{1/3})/
-           \mu_i^{1/3}
+           resid\_anscombe_i = 3 * (Y_i^{1/3} - \mu_i^{1/3}) / \mu_i^{1/3}
         """
         return 3 * (endog**(1/3.) - mu**(1/3.)) / mu**(1/3.)
 
@@ -886,18 +878,17 @@ class Binomial(Family):
 
         .. math::
 
-           D = -2 \sum_i \mathbf{1}_{i} \cdot \log(\mu_i) + \mathbf{0}_{i}
-           \cdot \log(1 - \mu_i)
+           D = -2 * \sum_i I_{1,i} * \log(\mu_i) + I_{0,i} * \log(1 - \mu_i)
 
-        where :math:`\mathbf{1}_i` is an indicator function that evalueates to
-        1 if :math:`Y_i = 1`. and :math:`\mathbf{0}_i` is an indicator function
-        that evaluates to 1 if :math:`Y_i = 0`.
+        where :math:`I_{1,i}` is an indicator function that evalueates to 1 if
+        :math:`Y_i = 1`. and :math:`I_{0,i}` is an indicator function that
+        evaluates to 1 if :math:`Y_i = 0`.
 
         If the model is ninomial:
 
         .. math::
 
-           D = 2 \sum_i \log(Y_i / \mu_i) + (n_i - Y_i) \cdot \log((n_i - Y_i)
+           D = 2 * \sum_i \log(Y_i / \mu_i) + (n_i - Y_i) * \log((n_i - Y_i)
            / n_i - \mu_i)
 
         where :math:`Y_i` and :math:`n` are as defined in Binomial.initialize.
@@ -940,21 +931,19 @@ class Binomial(Family):
 
         .. math::
 
-           \mathrm{resid\_dev}_i = \mathrm{sign}(Y_i - \mu_i) \cdot \sqrt{
-           -2 \cdot \mathrm{freq\_weights}_i \cdot \log(\mathbf{1_i} \cdot
-           \mu_i + \mathbf{0_i} \cdot (1 - \mu_i))}
+           resid\_dev_i = sign(Y_i - \mu_i) * \sqrt{-2 * freq\_weights_i *
+           \log(I_{1,i} * \mu_i + I_{0,i} * (1 - \mu_i))}
 
-        where :math:`\mathbf{1}_i` is an indicator function that evalueates to
-        1 if :math:`Y_i = 1`. and :math:`\mathbf{0}_i` is an indicator function
-        that evaluates to 1 if :math:`Y_i = 0`.
+        where :math:`I_{1,i}` is an indicator function that evalueates to 1 if
+        :math:`Y_i = 1`. and :math:`I_{0,i}` is an indicator function that
+        evaluates to 1 if :math:`Y_i = 0`.
 
         If the endogenous variable is binomial:
 
         .. math::
 
-           \mathrm{resid\_dev}_i = \mathrm{sign}(Y_i - \mu_i) \sqrt{
-           2 n_i \cdot (Y_i \cdot \log(Y_i / \mu_i) + (1 - Y_i) \cdot \log(
-           1 - Y_i)/(1 - \mu_i))}
+           resid\_dev_i = sign(Y_i - \mu_i) \sqrt{2 * n_i * (Y_i * \log(Y_i /
+           \mu_i) + (1 - Y_i) * \log(1 - Y_i)/(1 - \mu_i))}
 
         where :math:`Y_i` and :math:`n` are as defined in Binomial.initialize.
         """
@@ -999,18 +988,18 @@ class Binomial(Family):
 
         .. math::
 
-         \mathrm{llf} = \phi \sum_i (y_i \cdot \log(\mu_i/(1-\mu_i)) + \log(
-         1-\mu_i)) \cdot \mathrm{freq\_weights}_i
+         llf = \phi \sum_i (y_i * \log(\mu_i/(1-\mu_i)) + \log(1-\mu_i)) *
+         freq\_weights_i
 
         If the endogenous variable is binomial:
 
         .. math::
 
-           \mathrm{llf} = \phi \sum_i (\ln \Gamma(n+1) - \ln \Gamma(y_i + 1) -
-           \ln \Gamma(n_i - y_i +1) + y_i \cdot \log(\mu_i / (1 - \mu_i)) +
-           n \cdot \log(1 - \mu_i)) \cdot \mathrm{freq\_weights}_i
+           llf = \phi * \sum_i (\ln \Gamma(n+1) - \ln \Gamma(y_i + 1) -
+           \ln \Gamma(n_i - y_i +1) + y_i * \log(\mu_i / (1 - \mu_i)) + n *
+           \log(1 - \mu_i)) * freq\_weights_i
 
-        where :math:`y_i = Y_i \cdot n_i` with :math:`Y_i` and :math:`n_i` as
+        where :math:`y_i = Y_i * n_i` with :math:`Y_i` and :math:`n_i` as
         defined in Binomial initialize.  This simply makes :math:`y_i` the
         original number of successes.
         """
@@ -1137,9 +1126,8 @@ class InverseGaussian(Family):
         -----
         .. math::
 
-           \mathrm{resid\_dev}_i = \mathrm{sign}(Y_i - \mu_i) \sqrt {
-           \mathrm{freq\_weights}_i \cdot (Y_i - \mu_i)^2 / (Y_i \cdot
-           \mu_i^2)} / \phi
+           resid\_dev_i = sign(Y_i - \mu_i) \sqrt {freq\_weights_i *
+           (Y_i - \mu_i)^2 / (Y_i * \mu_i^2)} / \phi
         """
         return np.sign(endog-mu) * np.sqrt(freq_weights *
                                            (endog-mu)**2/(endog*mu**2))/scale
@@ -1168,8 +1156,7 @@ class InverseGaussian(Family):
         -----
         .. math::
 
-           D = \sum_i \mathrm{freq\_weights}_i \cdot ((Y_i - \mu_i)^2 /
-           (Y_i \cdot \mu_i^2)) / \phi
+           D = \sum_i freq\_weights_i * ((Y_i - \mu_i)^2 / (Y_i *\mu_i^2))/\phi
         """
         return np.sum(freq_weights*(endog-mu)**2/(endog*mu**2))/scale
 
@@ -1198,9 +1185,8 @@ class InverseGaussian(Family):
         -----
         .. math::
 
-           \mathrm{llf} = -1/2 \cdot \sum_i \mathrm{freq\_weights}_i \cdot
-           ((Y_i - \mu_i)^2 / (Y_i \cdot \mu_i \cdot \phi) +
-           \log(\phi \cdot Y_i^3) + \log(2 \pi))
+           llf = -1/2 * \sum_i freq\_weights_i * ((Y_i - \mu_i)^2 / (Y_i *
+           \mu_i * \phi) + \log(\phi * Y_i^3) + \log(2 * \pi))
         """
         return -.5 * np.sum(((endog - mu)**2/(endog * mu**2 * scale) +
                              np.log(scale * endog**3) + np.log(2 * np.pi)) *
@@ -1227,7 +1213,7 @@ class InverseGaussian(Family):
         -----
         .. math::
 
-           \mathrm{resid\_anscombe}_i = \log(Y_i / \mu_i) / \sqrt(\mu_i)
+           resid\_anscombe_i = \log(Y_i / \mu_i) / \sqrt{\mu_i}
         """
         return np.log(endog / mu) / np.sqrt(mu)
 
@@ -1313,18 +1299,16 @@ class NegativeBinomial(Family):
 
         Notes
         -----
-        :math:`D = \sum_i \mathrm{piecewise}_i` where
-        :math:`\mathrm{piecewise}` is defined as:
+        :math:`D = \sum_i piecewise_i` where :math:`piecewise_i` is defined as:
 
         If :math:`Y_{i} = 0`:
 
-        :math:`\mathrm{piecewise}_i = 2\log(1+\alpha \cdot \mu_i)/\alpha`
+        :math:`piecewise_i = 2* \log(1 + \alpha * \mu_i) / \alpha`
 
         If :math:`Y_{i} > 0`:
 
-        :math:`\mathrm{piecewise}_i = 2 Y_i \cdot \log(Y_i / \mu_i) - (2 /
-        \alpha) \cdot (1 + \alpha \cdot Y_i) \cdot \ln(1 + \alpha \cdot Y_i) /
-        (1 + \alpha \cdot \mu_i)`
+        :math:`piecewise_i = 2 * Y_i * \log(Y_i / \mu_i) - (2 / \alpha) *
+        (1 + \alpha * Y_i) * \ln(1 + \alpha * Y_i) / (1 + \alpha * \mu_i)`
         """
         iszero = np.equal(endog, 0)
         notzero = 1 - iszero
@@ -1359,21 +1343,18 @@ class NegativeBinomial(Family):
 
         Notes
         -----
-        :math:`\mathrm{resid\_dev}_i = \mathrm{sign}(Y_i-\mu_i) \cdot
-        \sqrt{\mathrm{piecewise}_i}`
+        :math:`resid\_dev_i = sign(Y_i-\mu_i) * \sqrt{piecewise_i}`
 
-        where :math:`\mathrm{piecewise}_i` is defined as
+        where :math:`piecewise_i` is defined as
 
         If :math:`Y_i = 0`:
 
-        :math:`\mathrm{piecewise}_i = 2 \cdot \log(1+\alpha \cdot \mu_i)/
-        \alpha`
+        :math:`piecewise_i = 2 * \log(1 + \alpha * \mu_i)/ \alpha`
 
         If :math:`Y_i > 0`:
 
-        :math:`\mathrm{piecewise}_i = 2 \cdot Y_i \cdot \log(Y_i / \mu_i) - (2/
-        \alpha) \cdot (1 + \alpha \cdot Y_i) \cdot \log((1 + \alpha \cdot
-        Y_i) / (1 + \alpha \cdot \mu_i))`
+        :math:`piecewise_i = 2 * Y_i * \log(Y_i / \mu_i) - (2 / \alpha) *
+        (1 + \alpha * Y_i) * \log((1 + \alpha * Y_i) / (1 + \alpha * \mu_i))`
         '''
         iszero = np.equal(endog, 0)
         notzero = 1 - iszero
@@ -1387,7 +1368,7 @@ class NegativeBinomial(Family):
 
     def loglike(self, endog, mu, freq_weights=1., scale=1.):
         # TODO: Check weights
-        """
+        r"""
         The log-likelihood function in terms of the fitted mean response.
 
         Parameters
@@ -1413,16 +1394,16 @@ class NegativeBinomial(Family):
 
         .. math::
 
-           \mathrm{llf} = \sum_i \mathrm{freq\_weights}_i \cdot (Y_i \cdot
-           \log{(\\alpha \cdot e^{\eta_i} / (1 + \\alpha \cdot e^{\eta_i}))} -
-           \log{(1 + \\alpha \cdot e^{\eta_i})} / \\alpha + C)
+           llf = \sum_i freq\_weights_i * (Y_i * \log{(\alpha * e^{\eta_i} /
+           (1 + \alpha * e^{\eta_i}))} - \log{(1 + \alpha * e^{\eta_i})} /
+            \alpha + Constant)
 
-        where :math:`C` is defined as:
+        where :math:`Constant` is defined as:
 
         .. math::
 
-           C = \ln \Gamma{(Y_i + 1/ \\alpha )} - \ln \Gamma(Y_i + 1) -
-                      \ln \Gamma{(1/ \\alpha )}
+           Constant = \ln \Gamma{(Y_i + 1/ \alpha )} - \ln \Gamma(Y_i + 1) -
+           \ln \Gamma{(1/ \alpha )}
         """
         lin_pred = self._link(mu)
         constant = (special.gammaln(endog + 1 / self.alpha) -
