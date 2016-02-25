@@ -1115,16 +1115,7 @@ class CheckWtdDuplicationMixin(object):
         assert_allclose(self.res1.conf_int(), self.res2.conf_int(), atol=1e-6,
                         rtol=1e-6)
 
-    def test_missing(self):
-        endog = self.data.endog.copy()
-        exog = self.data.exog.copy()
-        exog[0, 0] = np.nan
-        endog[[2, 4, 6, 8]] = np.nan
-        mod_misisng = GLM(endog, exog, self.freq_weights, self.model.family)
-        assert_equal(mod_misisng.freq_weights.shape[0],
-                     mod_misisng.endog.shape[0])
-        assert_equal(mod_misisng.freq_weights.shape[0],
-                     mod_misisng.exog.shape[0])
+
 
 
 class TestWtdGlmPoisson(CheckWtdDuplicationMixin):
@@ -1298,6 +1289,23 @@ class TestWtdGlmGammaScale_dev(CheckWtdDuplicationMixin):
         self.res2 = GLM(self.endog_big, self.exog_big,
                         family=family_link,
                         scale='dev').fit()
+
+
+def test_wtd_patsy_missing():
+    from statsmodels.datasets.cpunish import load
+    import pandas as pd
+    data = load()
+    data.exog[0, 0] = np.nan
+    data.endog[[2, 4, 6, 8]] = np.nan
+    data.pandas = pd.DataFrame(data.exog, columns=data.exog_name)
+    data.pandas['EXECUTIONS'] = data.endog
+    formula = """EXECUTIONS ~ INCOME + PERPOVERTY + PERBLACK + VC100k96 +
+                 SOUTH + DEGREE"""
+    mod_misisng = GLM.from_formula(formula, data=data.pandas)
+    assert_equal(mod_misisng.freq_weights.shape[0],
+                 mod_misisng.endog.shape[0])
+    assert_equal(mod_misisng.freq_weights.shape[0],
+                 mod_misisng.exog.shape[0])
 
 if __name__=="__main__":
     #run_module_suite()
