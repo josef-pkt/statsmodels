@@ -76,7 +76,7 @@ class Family(object):
         self.variance = variance
 
     def starting_mu(self, y):
-        """
+        r"""
         Starting value for mu in the IRLS algorithm.
 
         Parameters
@@ -102,7 +102,7 @@ class Family(object):
         return (y + y.mean())/2.
 
     def weights(self, mu):
-        """
+        r"""
         Weights for IRLS steps
 
         Parameters
@@ -124,8 +124,8 @@ class Family(object):
         return 1. / (self.link.deriv(mu)**2 * self.variance(mu))
 
     def deviance(self, endog, mu, freq_weights=1., scale=1.):
-        """
-        Deviance of (endog,mu) pair.
+        r"""
+        The deviance function evaluated at (endog,mu,freq_weights,mu).
 
         Deviance is usually defined as twice the loglikelihood ratio.
 
@@ -151,8 +151,8 @@ class Family(object):
 
         .. math::
 
-           D = \sum_i (2 * llf(Y_i, Y_i) - 2 * llf(Y_i, \mu_i)) *
-           freq\_weights_i / \phi
+           D = \sum_i (2 * freq\_weights_i * llf(Y_i, Y_i) - 2 *
+               llf(Y_i, \mu_i)) / scale
 
         where y is the endogenous variable. The deviance functions are
         analytically defined for each family.
@@ -311,7 +311,7 @@ class Poisson(Family):
         return np.clip(x, FLOAT_EPS, np.inf)
 
     def resid_dev(self, endog, mu, freq_weights=1., scale=1.):
-        """Poisson deviance residual
+        r"""Poisson deviance residual
 
         Parameters
         ----------
@@ -335,7 +335,7 @@ class Poisson(Family):
         .. math::
 
            resid\_dev_i = sign(Y_i - \mu_i) * \sqrt{2 * freq\_weights_i *
-           (Y_i * \log(Y_i / \mu_i) - (Y_i - \mu_i))} / \phi
+                          (Y_i * \log(Y_i / \mu_i) - (Y_i - \mu_i))} / scale
         """
         endog_mu = self._clean(endog / mu)
         return (np.sign(endog - mu) *
@@ -343,7 +343,7 @@ class Poisson(Family):
                                             (endog - mu))) / scale)
 
     def deviance(self, endog, mu, freq_weights=1., scale=1.):
-        '''
+        r'''
         Poisson deviance function
 
         Parameters
@@ -360,7 +360,8 @@ class Poisson(Family):
         Returns
         -------
         deviance : float
-            The deviance function at (endog,mu) as defined below.
+            The deviance function at (endog,mu,freq_weights,scale) as defined
+            below.
 
         Notes
         -----
@@ -368,13 +369,13 @@ class Poisson(Family):
 
         .. math::
 
-           D = 2 * \sum_i (Y_i * freq\_weights_i * \log(Y_i / \mu_i))/ \phi
+           D = 2 * \sum_i (freq\_weights_i * Y_i * \log(Y_i / \mu_i))/ scale
         '''
         endog_mu = self._clean(endog / mu)
         return 2 * np.sum(endog * freq_weights * np.log(endog_mu)) / scale
 
     def loglike(self, endog, mu, freq_weights=1., scale=1.):
-        """
+        r"""
         The log-likelihood function in terms of the fitted mean response.
 
         Parameters
@@ -398,15 +399,15 @@ class Poisson(Family):
         -----
         .. math::
 
-           llf = \phi * \sum_i freq\_weights_i * (Y_i * \log(\mu_i) - \mu_i -
-           \ln \Gamma(Y_i + 1))
+           llf = scale * \sum_i freq\_weights_i * (Y_i * \log(\mu_i) - \mu_i -
+                 \ln \Gamma(Y_i + 1))
         """
         loglike = np.sum(freq_weights * (endog * np.log(mu) - mu -
                          special.gammaln(endog + 1)))
         return scale * loglike
 
     def resid_anscombe(self, endog, mu):
-        """
+        r"""
         Anscombe residuals for the Poisson exponential family distribution
 
         Parameters
@@ -464,7 +465,7 @@ class Gaussian(Family):
         self.link = link()
 
     def resid_dev(self, endog, mu, freq_weights=1., scale=1.):
-        """
+        r"""
         Gaussian deviance residuals
 
         Parameters
@@ -489,14 +490,14 @@ class Gaussian(Family):
         .. math::
 
            resid\_dev_i = freq\_weights_i * (Y_i - \mu_i) / \sqrt{Var(\mu_i)} /
-           \phi
+                          scale
         """
 
         return (np.sqrt(freq_weights) * (endog - mu) /
                 np.sqrt(self.variance(mu)) / scale)
 
     def deviance(self, endog, mu, freq_weights=1., scale=1.):
-        """
+        r"""
         Gaussian deviance function
 
         Parameters
@@ -520,12 +521,12 @@ class Gaussian(Family):
         --------
         .. math::
 
-           D = \sum_i freq\_weights_i * (Y_i - \mu_i)^2 / \phi
+           D = \sum_i freq\_weights_i * (Y_i - \mu_i)^2 / scale
         """
         return np.sum((freq_weights * (endog - mu)**2)) / scale
 
     def loglike(self, endog, mu, freq_weights=1., scale=1.):
-        """
+        r"""
         The log-likelihood in terms of the fitted mean response.
 
         Parameters
@@ -564,8 +565,8 @@ class Gaussian(Family):
 
         .. math::
 
-           llf = \sum_i freq\_weights_i * ((Y_i * \mu_i - \mu_i^2 / 2) / \phi -
-           Y^2 / 2 * \phi - (1/2) * \log(2 * \pi * \phi))
+           llf = \sum_i freq\_weights_i * ((Y_i * \mu_i - \mu_i^2 / 2) / scale-
+                 Y^2 / (2 * scale) - (1/2) * \log(2 * \pi * scale))
         """
         if isinstance(self.link, L.Power) and self.link.power == 1:
             # This is just the loglikelihood for classical OLS
@@ -579,7 +580,7 @@ class Gaussian(Family):
                           endog**2/(2 * scale) - .5*np.log(2 * np.pi * scale)))
 
     def resid_anscombe(self, endog, mu):
-        """
+        r"""
         The Anscombe residuals for the Gaussian exponential family distribution
 
         Parameters
@@ -649,7 +650,7 @@ class Gamma(Family):
         return np.clip(x, FLOAT_EPS, np.inf)
 
     def deviance(self, endog, mu, freq_weights=1., scale=1.):
-        """
+        r"""
         Gamma deviance function
 
         Parameters
@@ -673,7 +674,7 @@ class Gamma(Family):
         .. math::
 
            D = 2 * \sum_i freq\_weights_i * ((Y_i - \mu_i)/\mu_i - \log(Y_i /
-           \mu_i))
+               \mu_i))
         """
         endog_mu = self._clean(endog/mu)
         return 2*np.sum(freq_weights*((endog-mu)/mu-np.log(endog_mu)))
@@ -704,7 +705,7 @@ class Gamma(Family):
         .. math::
 
            resid\_dev_i = sign(Y_i - \mu_i) \sqrt{-2 * freq\_weights_i *
-           (-(Y_i - \mu_i) / \mu_i + \log(Y_i / \mu_i))}
+                          (-(Y_i - \mu_i) / \mu_i + \log(Y_i / \mu_i))}
         """
         endog_mu = self._clean(endog / mu)
         return np.sign(endog - mu) * np.sqrt(-2 * freq_weights *
@@ -712,7 +713,7 @@ class Gamma(Family):
                                               np.log(endog_mu)))
 
     def loglike(self, endog, mu, freq_weights=1., scale=1.):
-        """
+        r"""
         The log-likelihood function in terms of the fitted mean response.
 
         Parameters
@@ -736,8 +737,9 @@ class Gamma(Family):
         --------
         .. math::
 
-           llf = -1 / \phi * \sum_i freq\_weights_i * (Y_i / \mu_i+\log(\mu_i)+
-           (\phi -1) * \log(Y) + \log(\phi) + \phi * \ln \Gamma(1 /\phi))
+           llf = -1 / scale * \sum_i freq\_weights_i * (Y_i / \mu_i+\log(\mu_i)+
+                 (scale -1) * \log(Y) + \log(scale) + scale *
+                 \ln \Gamma(1 / scale))
         """
         return - 1./scale * np.sum((endog/mu + np.log(mu) + (scale - 1) *
                                     np.log(endog) + np.log(scale) + scale *
@@ -748,7 +750,7 @@ class Gamma(Family):
         # our results due to an assumed difference in implementation
 
     def resid_anscombe(self, endog, mu):
-        """
+        r"""
         The Anscombe residuals for Gamma exponential family distribution
 
         Parameters
@@ -852,7 +854,7 @@ class Binomial(Family):
             return endog, np.ones(endog.shape[0])
 
     def deviance(self, endog, mu, freq_weights=1, scale=1.):
-        '''
+        r'''
         Deviance function for either Bernoulli or Binomial data.
 
         Parameters
@@ -878,7 +880,8 @@ class Binomial(Family):
 
         .. math::
 
-           D = -2 * \sum_i I_{1,i} * \log(\mu_i) + I_{0,i} * \log(1 - \mu_i)
+           D = -2 * \sum_i freq\_weights * (I_{1,i} * \log(\mu_i) + I_{0,i} *
+               \log(1 - \mu_i))
 
         where :math:`I_{1,i}` is an indicator function that evalueates to 1 if
         :math:`Y_i = 1`. and :math:`I_{0,i}` is an indicator function that
@@ -888,8 +891,8 @@ class Binomial(Family):
 
         .. math::
 
-           D = 2 * \sum_i \log(Y_i / \mu_i) + (n_i - Y_i) * \log((n_i - Y_i)
-           / n_i - \mu_i)
+           D = 2 * \sum_i freq\_weights * (\log(Y_i / \mu_i) + (n_i - Y_i) *
+               \log((n_i - Y_i) / n_i - \mu_i))
 
         where :math:`Y_i` and :math:`n` are as defined in Binomial.initialize.
         '''
@@ -905,7 +908,7 @@ class Binomial(Family):
                                (1 - mu) + 1e-200)))
 
     def resid_dev(self, endog, mu, freq_weights=1, scale=1.):
-        """
+        r"""
         Binomial deviance residuals
 
         Parameters
@@ -932,7 +935,7 @@ class Binomial(Family):
         .. math::
 
            resid\_dev_i = sign(Y_i - \mu_i) * \sqrt{-2 * freq\_weights_i *
-           \log(I_{1,i} * \mu_i + I_{0,i} * (1 - \mu_i))}
+                          \log(I_{1,i} * \mu_i + I_{0,i} * (1 - \mu_i))}
 
         where :math:`I_{1,i}` is an indicator function that evalueates to 1 if
         :math:`Y_i = 1`. and :math:`I_{0,i}` is an indicator function that
@@ -942,8 +945,9 @@ class Binomial(Family):
 
         .. math::
 
-           resid\_dev_i = sign(Y_i - \mu_i) \sqrt{2 * n_i * (Y_i * \log(Y_i /
-           \mu_i) + (1 - Y_i) * \log(1 - Y_i)/(1 - \mu_i))}
+           resid\_dev_i = sign(Y_i - \mu_i) \sqrt{2 * freq\_weights * n_i *
+                          (Y_i * \log(Y_i / \mu_i) + (1 - Y_i) *
+                          \log(1 - Y_i)/(1 - \mu_i))}
 
         where :math:`Y_i` and :math:`n` are as defined in Binomial.initialize.
         """
@@ -962,7 +966,7 @@ class Binomial(Family):
                                                   1e-200)))/scale)
 
     def loglike(self, endog, mu, freq_weights=1, scale=1.):
-        """
+        r"""
         The log-likelihood function in terms of the fitted mean response.
 
         Parameters
@@ -988,16 +992,16 @@ class Binomial(Family):
 
         .. math::
 
-         llf = \phi \sum_i (y_i * \log(\mu_i/(1-\mu_i)) + \log(1-\mu_i)) *
-         freq\_weights_i
+         llf = scale * \sum_i (y_i * \log(\mu_i/(1-\mu_i)) + \log(1-\mu_i)) *
+               freq\_weights_i
 
         If the endogenous variable is binomial:
 
         .. math::
 
-           llf = \phi * \sum_i (\ln \Gamma(n+1) - \ln \Gamma(y_i + 1) -
-           \ln \Gamma(n_i - y_i +1) + y_i * \log(\mu_i / (1 - \mu_i)) + n *
-           \log(1 - \mu_i)) * freq\_weights_i
+           llf = scale * \sum_i freq\_weights_i * (\ln \Gamma(n+1) -
+                 \ln \Gamma(y_i + 1) - \ln \Gamma(n_i - y_i +1) + y_i *
+                 \log(\mu_i / (1 - \mu_i)) + n * \log(1 - \mu_i))
 
         where :math:`y_i = Y_i * n_i` with :math:`Y_i` and :math:`n_i` as
         defined in Binomial initialize.  This simply makes :math:`y_i` the
@@ -1102,7 +1106,7 @@ class InverseGaussian(Family):
         self.link = link()
 
     def resid_dev(self, endog, mu, freq_weights=1., scale=1.):
-        """
+        r"""
         Returns the deviance residuals for the inverse Gaussian family.
 
         Parameters
@@ -1127,13 +1131,13 @@ class InverseGaussian(Family):
         .. math::
 
            resid\_dev_i = sign(Y_i - \mu_i) \sqrt {freq\_weights_i *
-           (Y_i - \mu_i)^2 / (Y_i * \mu_i^2)} / \phi
+                          (Y_i - \mu_i)^2 / (Y_i * \mu_i^2)} / scale
         """
         return np.sign(endog-mu) * np.sqrt(freq_weights *
                                            (endog-mu)**2/(endog*mu**2))/scale
 
     def deviance(self, endog, mu, freq_weights=1., scale=1.):
-        """
+        r"""
         Inverse Gaussian deviance function
 
         Parameters
@@ -1156,12 +1160,13 @@ class InverseGaussian(Family):
         -----
         .. math::
 
-           D = \sum_i freq\_weights_i * ((Y_i - \mu_i)^2 / (Y_i *\mu_i^2))/\phi
+           D = \sum_i freq\_weights_i * ((Y_i - \mu_i)^2 / (Y_i *\mu_i^2)) /
+               scale
         """
         return np.sum(freq_weights*(endog-mu)**2/(endog*mu**2))/scale
 
     def loglike(self, endog, mu, freq_weights=1., scale=1.):
-        """
+        r"""
         The log-likelihood function in terms of the fitted mean response.
 
         Parameters
@@ -1186,14 +1191,14 @@ class InverseGaussian(Family):
         .. math::
 
            llf = -1/2 * \sum_i freq\_weights_i * ((Y_i - \mu_i)^2 / (Y_i *
-           \mu_i * \phi) + \log(\phi * Y_i^3) + \log(2 * \pi))
+                 \mu_i * scale) + \log(scale * Y_i^3) + \log(2 * \pi))
         """
         return -.5 * np.sum(((endog - mu)**2/(endog * mu**2 * scale) +
                              np.log(scale * endog**3) + np.log(2 * np.pi)) *
                             freq_weights)
 
     def resid_anscombe(self, endog, mu):
-        """
+        r"""
         The Anscombe residuals for the inverse Gaussian distribution
 
         Parameters
@@ -1308,7 +1313,7 @@ class NegativeBinomial(Family):
         If :math:`Y_{i} > 0`:
 
         :math:`piecewise_i = 2 * Y_i * \log(Y_i / \mu_i) - (2 / \alpha) *
-        (1 + \alpha * Y_i) * \ln(1 + \alpha * Y_i) / (1 + \alpha * \mu_i)`
+            (1 + \alpha * Y_i) * \ln(1 + \alpha * Y_i) / (1 + \alpha * \mu_i)`
         """
         iszero = np.equal(endog, 0)
         notzero = 1 - iszero
@@ -1321,7 +1326,7 @@ class NegativeBinomial(Family):
         return np.sum(freq_weights * tmp) / scale
 
     def resid_dev(self, endog, mu, freq_weights=1, scale=1.):
-        r'''
+        r"""
         Negative Binomial Deviance Residual
 
         Parameters
@@ -1355,7 +1360,7 @@ class NegativeBinomial(Family):
 
         :math:`piecewise_i = 2 * Y_i * \log(Y_i / \mu_i) - (2 / \alpha) *
         (1 + \alpha * Y_i) * \log((1 + \alpha * Y_i) / (1 + \alpha * \mu_i))`
-        '''
+        """
         iszero = np.equal(endog, 0)
         notzero = 1 - iszero
         endog_mu = self._clean(endog / mu)
@@ -1395,15 +1400,15 @@ class NegativeBinomial(Family):
         .. math::
 
            llf = \sum_i freq\_weights_i * (Y_i * \log{(\alpha * e^{\eta_i} /
-           (1 + \alpha * e^{\eta_i}))} - \log{(1 + \alpha * e^{\eta_i})} /
-            \alpha + Constant)
+                 (1 + \alpha * e^{\eta_i}))} - \log{(1 + \alpha * e^{\eta_i})}/
+                 \alpha + Constant)
 
         where :math:`Constant` is defined as:
 
         .. math::
 
            Constant = \ln \Gamma{(Y_i + 1/ \alpha )} - \ln \Gamma(Y_i + 1) -
-           \ln \Gamma{(1/ \alpha )}
+                      \ln \Gamma{(1/ \alpha )}
         """
         lin_pred = self._link(mu)
         constant = (special.gammaln(endog + 1 / self.alpha) -
