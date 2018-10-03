@@ -752,7 +752,7 @@ class ZeroInflatedGeneralizedPoissonResults(CountResults):
         alpha = self.params[self.model.k_inflate:][-1]
         mu = np.exp(self.predict(which='linear'))
         w = 1 - self.fittedvalues / mu
-        return ((1 + alpha * mu**p)**2 + w * mu)
+        return (1 + alpha * mu**p)**2 + w * mu
 
     def get_margeff(self, at='overall', method='dydx', atexog=None,
             dummy=False, count=False):
@@ -793,7 +793,7 @@ class ZeroInflatedNegativeBinomialResults(CountResults):
         alpha = self.params[self.model.k_inflate:][-1]
         mu = np.exp(self.predict(which='linear'))
         w = 1 - self.fittedvalues / mu
-        return (1 + alpha * mu**(p-1) + w * mu)
+        return 1 + alpha * mu**(p-1) + w * mu
 
     def get_margeff(self, at='overall', method='dydx', atexog=None,
             dummy=False, count=False):

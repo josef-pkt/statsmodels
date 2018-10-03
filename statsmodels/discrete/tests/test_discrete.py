@@ -28,12 +28,11 @@ from statsmodels.discrete.discrete_margins import _iscount, _isdummy
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 from .results.results_discrete import Spector, DiscreteL1, RandHIE, Anes
-from statsmodels.tools.sm_exceptions import (PerfectSeparationError,
-                                             ConvergenceWarning)
+from statsmodels.tools.sm_exceptions import PerfectSeparationError
 from scipy.stats import nbinom
 
 try:
-    import cvxopt
+    import cvxopt  # noqa:F401
     has_cvxopt = True
 except ImportError:
     has_cvxopt = False
@@ -64,6 +63,7 @@ class CheckModelResults(object):
         assert_allclose(self.res1.tvalues, self.res2.z, rtol=5e-3, atol=5e-4)
 
     def test_pvalues(self):
+        # GH#5255
         # NB-geometric and NB2 have less agreement and larger rtol
         # NB1 fails at rtol=0.01
         # possible reason is that we compute cov_params at alpha and
@@ -73,9 +73,13 @@ class CheckModelResults(object):
         assert_allclose(self.res1.pvalues[:len(self.res2.pvalues)],
                         self.res2.pvalues, rtol=rtol, atol=1e-19)
 
-#    def test_cov_params(self):
-#        assert_almost_equal(self.res1.cov_params(), self.res2.cov_params,
-#                DECIMAL_4)
+    def test_cov_params(self):
+        if getattr(self.res2, "cov_params", None) is None:
+            pytest.skip("External validation results do not "
+                        "have `cov_params`")
+        assert_allclose(self.res1.cov_params(),
+                        self.res2.cov_params,
+                        atol=1.5e-4)
 
     def test_llf(self):
         assert_almost_equal(self.res1.llf, self.res2.llf, DECIMAL_4)
@@ -89,9 +93,6 @@ class CheckModelResults(object):
     def test_llr_pvalue(self):
         assert_almost_equal(self.res1.llr_pvalue, self.res2.llr_pvalue,
                 DECIMAL_4)
-
-    def test_normalized_cov_params(self):
-        pass
 
     def test_bse(self):
         assert_almost_equal(self.res1.bse, self.res2.bse, DECIMAL_4)
@@ -113,23 +114,31 @@ class CheckModelResults(object):
         res2_fitted = getattr(self.res2, 'phat', None)
         if res2_fitted is None:
             res2_fitted = np.exp(getattr(self.res2, 'linpred', None))
-        if res2_fitted is not None:
-            assert_allclose(fitted[:len(res2_fitted)], res2_fitted, rtol=5e-4)
+
+        assert res2_fitted is not None
+        assert_allclose(fitted[:len(res2_fitted)], res2_fitted, rtol=5e-4)
 
         # fittedvalues in discrete are currently linear prediction
         assert_allclose(self.res1.fittedvalues[:len(res2_fitted)],
-                        res2_fitted, atol=5e-4, rtol=5e-4)
+                        res2_fitted,
+                        atol=5e-4, rtol=5e-4)
+
+    def test_resid_response(self):
+        # GH#5255
+        fitted = self.res1.fittedvalues
 
         if self.res1.params.ndim == 2:
             # special case for MNLogit
             endog = self.res1.model.wendog
         else:
             endog = self.res1.model.endog
+
         resid = (endog - fitted)
         assert_allclose(self.res1.resid, resid, atol=1e-10)
         assert_allclose(self.res1.resid, self.res1.resid_response, atol=1e-10)
 
     def test_predict_xb(self):
+        # GH#5255
         try:
             linpred = self.res1.predict(linear=True)
         except TypeError:
@@ -1067,9 +1076,6 @@ class TestNegativeBinomialNB2Newton(CheckModelResults):
         # pvalues for NB2 and NBP2 has lower agreement
         cls.rtol_pvalues = 0.04
 
-    def test_jac(self):
-        pass
-
     #NOTE: The bse is much closer precitions to stata
     def test_bse(self):
         assert_almost_equal(self.res1.bse, self.res2.bse, DECIMAL_3)
@@ -1088,11 +1094,6 @@ class TestNegativeBinomialNB2Newton(CheckModelResults):
     def test_zstat(self): # Low precision because Z vs. t
         assert_almost_equal(self.res1.pvalues[:-1], self.res2.pvalues,
                             DECIMAL_2)
-
-    def no_info(self):
-        pass
-
-    test_jac = no_info
 
 
 class TestNegativeBinomialNB1Newton(CheckModelResults):
@@ -1121,9 +1122,6 @@ class TestNegativeBinomialNB1Newton(CheckModelResults):
         assert_almost_equal(self.res1.conf_int(), self.res2.conf_int,
                             DECIMAL_2)
 
-    def test_jac(self):
-        pass
-
 
 class TestNegativeBinomialNB2BFGS(CheckModelResults):
 
@@ -1139,9 +1137,6 @@ class TestNegativeBinomialNB2BFGS(CheckModelResults):
         cls.res2 = res2
 
         cls.rtol_pvalues = 0.04
-
-    def test_jac(self):
-        pass
 
     #NOTE: The bse is much closer precitions to stata
     def test_bse(self):
@@ -1164,11 +1159,6 @@ class TestNegativeBinomialNB2BFGS(CheckModelResults):
     def test_zstat(self): # Low precision because Z vs. t
         assert_almost_equal(self.res1.pvalues[:-1], self.res2.pvalues,
                             DECIMAL_2)
-
-    def no_info(self):
-        pass
-
-    test_jac = no_info
 
 
 class TestNegativeBinomialNB1BFGS(CheckModelResults):
@@ -1202,9 +1192,6 @@ class TestNegativeBinomialNB1BFGS(CheckModelResults):
         assert_almost_equal(self.res1.conf_int(), self.res2.conf_int,
                             DECIMAL_2)
 
-    def test_jac(self):
-        pass
-
 
 class TestNegativeBinomialGeometricBFGS(CheckModelResults):
     # Cannot find another implementation of the geometric to cross-check results
@@ -1237,17 +1224,11 @@ class TestNegativeBinomialGeometricBFGS(CheckModelResults):
         assert_almost_equal(self.res1.conf_int(), self.res2.conf_int,
                             DECIMAL_3)
 
-    def test_jac(self):
-        pass
-
     def test_params(self):
         assert_almost_equal(self.res1.params, self.res2.params, DECIMAL_3)
 
     def test_zstat(self): # Low precision because Z vs. t
         assert_almost_equal(self.res1.tvalues, self.res2.z, DECIMAL_1)
-
-    def no_info(self):
-        pass
 
     def test_llf(self):
         assert_almost_equal(self.res1.llf, self.res2.llf, DECIMAL_1)
@@ -1257,8 +1238,6 @@ class TestNegativeBinomialGeometricBFGS(CheckModelResults):
 
     def test_bse(self):
         assert_almost_equal(self.res1.bse, self.res2.bse, DECIMAL_3)
-
-    test_jac = no_info
 
 
 class CheckMNLogitBaseZero(CheckModelResults):
@@ -1615,7 +1594,7 @@ def test_binary_pred_table_zeros():
     assert_equal(res.pred_table(), expected)
 
 
-class TestGeneralizedPoisson_p2():
+class TestGeneralizedPoisson_p2(object):
     # Test Generalized Poisson model
 
     @classmethod

@@ -310,13 +310,14 @@ class CheckGenericMixin(object):
                                                   method=method, disp=0)
             else:
                 # more special casing RLM
-                if (isinstance(self.results.model, (sm.RLM))):
+                if isinstance(self.results.model, (sm.RLM)):
                     res1 = mod._fit_collinear(**method_kwd)
                 else:
                     res1 = mod._fit_collinear(cov_type=cov_type, **method_kwd)
                 if cov_type != 'nonrobust':
                     # reestimate original model to get robust cov
-                    res2 = self.results.model.fit(cov_type=cov_type, **method_kwd)
+                    res2 = self.results.model.fit(cov_type=cov_type,
+                                                  **method_kwd)
 
             if cov_type == 'nonrobust':
                 res2 = self.results

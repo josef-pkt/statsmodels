@@ -37,7 +37,7 @@ class Anes(object):
                 .0229760791, .8443638283, .042138047, .1434089089,
                 .0081338625, .0910979921, .025300888, 1.059954821]
         self.bse = np.reshape(bse, (6,-1), order='F')
-        self.linpred = np.loadtxt(os.path.join(cur_dir,'yhat_mnlogit.csv'))
+        self.linpred = np.loadtxt(os.path.join(cur_dir, 'yhat_mnlogit.csv'))
         self.phat = np.loadtxt(os.path.join(cur_dir,'phat_mnlogit.csv'))
         self.cov_params = None
         self.llf = -1461.922747312
@@ -735,7 +735,7 @@ class RandHIE(object):
         predict = np.loadtxt(os.path.join(cur_dir, 'yhat_poisson.csv'),
                    delimiter=",")
         self.phat = predict[:,0]
-        self.linpred = predict[:,1]
+        self.linpred = predict[:, 1]
         self.llf = -62419.588535018
         self.llnull = -66647.181687959
         self.df_model = 9
@@ -811,7 +811,8 @@ class RandHIE(object):
                 1.71796558863781e-28, 2.2944789508802e-19,
                 3.57231639404726e-158, 0.0268550333379416, 0.630272102021494,
                 0.0163241908407114, 8.55476622951356e-155]
-        self.linpred = [0.892904166867786, 0.892904166867786, 0.892904166867786,
+        self.linpred = [
+            0.892904166867786, 0.892904166867786, 0.892904166867786,
             0.892904166867786, 0.892904166867786, 0.937038051489553,
             0.937038051489553, 0.937038051489553, 0.937038051489553,
             0.937038051489553]
@@ -918,8 +919,9 @@ class RandHIE(object):
                         # from stata for alpha no lnalpha
                          [ 3.609675,    3.856716]]
         #   [  1.28360034e+00,   1.34979803e+00]]
-        self.linpred = [ 0.8487497 ,  0.8487497 ,  0.8487497 ,  0.8487497,
-            0.8487497 , 0.88201746,  0.88201746,  0.88201746,  0.88201746,
+        self.linpred = [
+            0.8487497,  0.8487497,  0.8487497,  0.8487497,
+            0.8487497,  0.88201746,  0.88201746,  0.88201746,  0.88201746,
             0.88201746]
 
     def negativebinomial_geometric_bfgs(self):
@@ -945,7 +947,8 @@ class RandHIE(object):
         self.llnull = -44586.650971362695 # old value -44199.27443567125
         self.llr = 2092.1425097129977 # old value 1317.3888595620811
         self.llr_pvalue = 0 # old value 5.4288002863296022e-278
-        self.linpred = [ 0.89348994,  0.89348994,  0.89348994,
+        self.linpred = [
+                0.89348994,  0.89348994,  0.89348994,
                 0.89348994,  0.89348994, 0.9365745 ,  0.9365745 ,  0.9365745 ,
                 0.9365745 ,  0.9365745 ]
         self.conf_int = [[-0.06854453, -0.04683335],

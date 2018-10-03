@@ -2212,7 +2212,8 @@ class MixedLMResults(base.LikelihoodModelResults, base.ResultMixin):
         The residuals reflect the mean structure specified by the
         fixed effects and the predicted random effects.
         """
-        return self.model.endog - self.fittedvalues
+        # GH#5255 method is the same as base class, more specific docstring
+        return super(MixedLMResults, self).resid
 
     @cache_readonly
     def bse_fe(self):

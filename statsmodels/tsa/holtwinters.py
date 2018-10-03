@@ -304,8 +304,9 @@ class HoltWintersResults(Results):
     summary
     """
 
-    def __init__(self, model, params, **kwargs):
+    def __init__(self, model, params, fittedvalues=None, **kwargs):
         self.data = model.data
+        self._fittedvalues = fittedvalues
         super(HoltWintersResults, self).__init__(model, params, **kwargs)
 
     @cache_readonly
@@ -973,10 +974,13 @@ class ExponentialSmoothing(TimeSeriesModel):
         formatted = formatted.loc[included]
 
         hwfit = HoltWintersResults(self, self.params, fittedfcast=fitted,
-                                   _fittedvalues=fitted[:-h - 1], fcastvalues=fitted[-h - 1:],
-                                   sse=sse, level=level, slope=slope, season=season, aic=aic,
+                                   fittedvalues=fitted[:-h - 1],
+                                   fcastvalues=fitted[-h - 1:],
+                                   sse=sse, level=level, slope=slope,
+                                   season=season, aic=aic,
                                    bic=bic, aicc=aicc, k=k,
-                                   params_formatted=formatted, optimized=optimized)
+                                   params_formatted=formatted,
+                                   optimized=optimized)
         return HoltWintersResultsWrapper(hwfit)
 
 
